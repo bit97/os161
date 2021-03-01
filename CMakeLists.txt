@@ -1,0 +1,448 @@
+cmake_minimum_required(VERSION 3.12)
+project(os161_C)
+
+set(CMAKE_C_STANDARD 11)
+
+include_directories(kern/include)
+include_directories(kern/include/kern)
+include_directories(kern/arch/mips/include)
+include_directories(kern/arch/mips/include/kern/)
+include_directories(kern/arch/mips/thread)
+include_directories(kern/arch/sys161/include)
+include_directories(kern/dev/generic)
+include_directories(kern/dev/lamebus)
+include_directories(build)
+include_directories(build/install)
+include_directories(build/install/hostinclude)
+include_directories(build/install/hostinclude/kern)
+include_directories(build/install/hostinclude/kern/machine)
+include_directories(build/install/hostinclude/kern/mips)
+include_directories(build/install/include)
+include_directories(build/install/include/kern)
+include_directories(build/install/include/kern/machine)
+include_directories(build/install/include/kern/mips)
+include_directories(build/install/include/machine)
+include_directories(build/install/include/sys)
+include_directories(build/install/include/types)
+include_directories(common/gcc-millicode)
+include_directories(userland/include)
+include_directories(userland/include/sys)
+include_directories(userland/include/types)
+include_directories(userland/lib/hostcompat)
+include_directories(userland/sbin/mksfs)
+include_directories(userland/testbin/badcall)
+include_directories(userland/testbin/f_test)
+include_directories(userland/testbin/randcall)
+include_directories(userland/testbin/triplehuge)
+include_directories(userland/testbin/triplemat)
+include_directories(userland/testbin/triplesort)
+include_directories(userland/uw-testbin/lib)
+
+
+#function(asstx x)
+#    include_directories(kern/compile/ASST${x})
+#    include_directories(kern/compile/ASST${x}/includelinks)
+#endfunction(asstx)
+
+#asstx(0)
+
+
+add_executable(os161_C
+        build/install/hostinclude/kern/mips/endian.h
+        build/install/hostinclude/kern/mips/regdefs.h
+        build/install/hostinclude/kern/mips/setjmp.h
+        build/install/hostinclude/kern/mips/signal.h
+        build/install/hostinclude/kern/mips/types.h
+        build/install/hostinclude/hostcompat.h
+        build/install/include/kern/mips/endian.h
+        build/install/include/kern/mips/regdefs.h
+        build/install/include/kern/mips/setjmp.h
+        build/install/include/kern/mips/signal.h
+        build/install/include/kern/mips/types.h
+        build/install/include/kern/endian.h
+        build/install/include/kern/errmsg.h
+        build/install/include/kern/errno.h
+        build/install/include/kern/fcntl.h
+        build/install/include/kern/ioctl.h
+        build/install/include/kern/iovec.h
+        build/install/include/kern/limits.h
+        build/install/include/kern/reboot.h
+        build/install/include/kern/resource.h
+        build/install/include/kern/seek.h
+        build/install/include/kern/sfs.h
+        build/install/include/kern/signal.h
+        build/install/include/kern/socket.h
+        build/install/include/kern/stat.h
+        build/install/include/kern/stattypes.h
+        build/install/include/kern/syscall.h
+        build/install/include/kern/time.h
+        build/install/include/kern/types.h
+        build/install/include/kern/unistd.h
+        build/install/include/kern/wait.h
+        build/install/include/sys/endian.h
+        build/install/include/sys/ioctl.h
+        build/install/include/sys/null.h
+        build/install/include/sys/reboot.h
+        build/install/include/sys/stat.h
+        build/install/include/sys/types.h
+        build/install/include/sys/wait.h
+        build/install/include/types/size_t.h
+        build/install/include/assert.h
+        build/install/include/err.h
+        build/install/include/errno.h
+        build/install/include/fcntl.h
+        build/install/include/limits.h
+        build/install/include/setjmp.h
+        build/install/include/signal.h
+        build/install/include/stdarg.h
+        build/install/include/stdint.h
+        build/install/include/stdio.h
+        build/install/include/stdlib.h
+        build/install/include/string.h
+        build/install/include/time.h
+        build/install/include/unistd.h
+        common/gcc-millicode/adddi3.c
+        common/gcc-millicode/anddi3.c
+        common/gcc-millicode/ashldi3.c
+        common/gcc-millicode/ashrdi3.c
+        common/gcc-millicode/cmpdi2.c
+        common/gcc-millicode/divdi3.c
+        common/gcc-millicode/iordi3.c
+        common/gcc-millicode/longlong.h
+        common/gcc-millicode/lshldi3.c
+        common/gcc-millicode/lshrdi3.c
+        common/gcc-millicode/moddi3.c
+        common/gcc-millicode/muldi3.c
+        common/gcc-millicode/negdi2.c
+        common/gcc-millicode/notdi2.c
+        common/gcc-millicode/qdivrem.c
+        common/gcc-millicode/subdi3.c
+        common/gcc-millicode/ucmpdi2.c
+        common/gcc-millicode/udivdi3.c
+        common/gcc-millicode/umoddi3.c
+        common/gcc-millicode/xordi3.c
+        common/libc/printf/__printf.c
+        common/libc/printf/snprintf.c
+        common/libc/stdlib/atoi.c
+        common/libc/string/bzero.c
+        common/libc/string/memcpy.c
+        common/libc/string/memmove.c
+        common/libc/string/strcat.c
+        common/libc/string/strchr.c
+        common/libc/string/strcmp.c
+        common/libc/string/strcpy.c
+        common/libc/string/strlen.c
+        common/libc/string/strrchr.c
+        common/libc/string/strtok_r.c
+        kern/arch/mips/include/kern/endian.h
+        kern/arch/mips/include/kern/regdefs.h
+        kern/arch/mips/include/kern/setjmp.h
+        kern/arch/mips/include/kern/signal.h
+        kern/arch/mips/include/kern/types.h
+        kern/arch/mips/include/current.h
+        kern/arch/mips/include/elf.h
+        kern/arch/mips/include/specialreg.h
+        kern/arch/mips/include/spinlock.h
+        kern/arch/mips/include/thread.h
+        kern/arch/mips/include/tlb.h
+        kern/arch/mips/include/trapframe.h
+        kern/arch/mips/include/types.h
+        kern/arch/mips/include/vm.h
+        kern/arch/mips/locore/trap.c
+        kern/arch/mips/syscall/syscall.c
+        kern/arch/mips/thread/cpu.c
+        kern/arch/mips/thread/switchframe.c
+        kern/arch/mips/thread/switchframe.h
+        kern/arch/mips/thread/thread_machdep.c
+        kern/arch/mips/vm/dumbvm.c
+        kern/arch/mips/vm/ram.c
+        kern/arch/sys161/dev/lamebus_machdep.c
+        kern/arch/sys161/include/bus.h
+        kern/arch/sys161/include/maxcpus.h
+        kern/compile/DUMBVM/includelinks/machine/kern/endian.h
+        kern/compile/DUMBVM/includelinks/machine/kern/regdefs.h
+        kern/compile/DUMBVM/includelinks/machine/kern/setjmp.h
+        kern/compile/DUMBVM/includelinks/machine/kern/signal.h
+        kern/compile/DUMBVM/includelinks/machine/kern/types.h
+        kern/compile/DUMBVM/includelinks/mips/kern/endian.h
+        kern/compile/DUMBVM/includelinks/mips/kern/regdefs.h
+        kern/compile/DUMBVM/includelinks/mips/kern/setjmp.h
+        kern/compile/DUMBVM/includelinks/mips/kern/signal.h
+        kern/compile/DUMBVM/includelinks/mips/kern/types.h
+        kern/compile/DUMBVM/autoconf.c
+        kern/compile/DUMBVM/autoconf.h
+        kern/compile/DUMBVM/opt-dumbvm.h
+        kern/compile/DUMBVM/opt-net.h
+        kern/compile/DUMBVM/opt-netfs.h
+        kern/compile/DUMBVM/opt-noasserts.h
+        kern/compile/DUMBVM/opt-sfs.h
+        kern/compile/DUMBVM/vers.c
+        kern/dev/generic/beep.c
+        kern/dev/generic/beep.h
+        kern/dev/generic/console.c
+        kern/dev/generic/console.h
+        kern/dev/generic/random.c
+        kern/dev/generic/random.h
+        kern/dev/generic/rtclock.c
+        kern/dev/generic/rtclock.h
+        kern/dev/lamebus/beep_ltimer.c
+        kern/dev/lamebus/con_lscreen.c
+        kern/dev/lamebus/con_lser.c
+        kern/dev/lamebus/emu.c
+        kern/dev/lamebus/emu.h
+        kern/dev/lamebus/emu_att.c
+        kern/dev/lamebus/lamebus.c
+        kern/dev/lamebus/lamebus.h
+        kern/dev/lamebus/lhd.c
+        kern/dev/lamebus/lhd.h
+        kern/dev/lamebus/lhd_att.c
+        kern/dev/lamebus/lnet.c
+        kern/dev/lamebus/lnet_att.c
+        kern/dev/lamebus/lrandom.c
+        kern/dev/lamebus/lrandom.h
+        kern/dev/lamebus/lrandom_att.c
+        kern/dev/lamebus/lscreen.c
+        kern/dev/lamebus/lscreen.h
+        kern/dev/lamebus/lscreen_att.c
+        kern/dev/lamebus/lser.c
+        kern/dev/lamebus/lser.h
+        kern/dev/lamebus/lser_att.c
+        kern/dev/lamebus/ltimer.c
+        kern/dev/lamebus/ltimer.h
+        kern/dev/lamebus/ltimer_att.c
+        kern/dev/lamebus/ltrace.c
+        kern/dev/lamebus/ltrace.h
+        kern/dev/lamebus/ltrace_att.c
+        kern/dev/lamebus/random_lrandom.c
+        kern/dev/lamebus/rtclock_ltimer.c
+        kern/fs/sfs/sfs_io.c
+        kern/include/kern/endian.h
+        kern/include/kern/errmsg.h
+        kern/include/kern/errno.h
+        kern/include/kern/fcntl.h
+        kern/include/kern/ioctl.h
+        kern/include/kern/iovec.h
+        kern/include/kern/limits.h
+        kern/include/kern/reboot.h
+        kern/include/kern/resource.h
+        kern/include/kern/seek.h
+        kern/include/kern/sfs.h
+        kern/include/kern/signal.h
+        kern/include/kern/socket.h
+        kern/include/kern/stat.h
+        kern/include/kern/stattypes.h
+        kern/include/kern/syscall.h
+        kern/include/kern/time.h
+        kern/include/kern/types.h
+        kern/include/kern/unistd.h
+        kern/include/kern/wait.h
+        kern/include/addrspace.h
+        kern/include/array.h
+        kern/include/bitmap.h
+        kern/include/cdefs.h
+        kern/include/clock.h
+        kern/include/copyinout.h
+        kern/include/cpu.h
+        kern/include/current.h
+        kern/include/device.h
+        kern/include/elf.h
+        kern/include/emufs.h
+        kern/include/endian.h
+        kern/include/fs.h
+        kern/include/lib.h
+        kern/include/limits.h
+        kern/include/mainbus.h
+        kern/include/proc.h
+        kern/include/setjmp.h
+        kern/include/sfs.h
+        kern/include/signal.h
+        kern/include/spinlock.h
+        kern/include/spl.h
+        kern/include/stat.h
+        kern/include/stdarg.h
+        kern/include/synch.h
+        kern/include/syscall.h
+        kern/include/test.h
+        kern/include/thread.h
+        kern/include/threadlist.h
+        kern/include/threadprivate.h
+        kern/include/types.h
+        kern/include/uio.h
+        kern/include/version.h
+        kern/include/vfs.h
+        kern/include/vm.h
+        kern/include/vnode.h
+        kern/include/wchan.h
+        kern/lib/array.c
+        kern/lib/bitmap.c
+        kern/lib/bswap.c
+        kern/lib/kgets.c
+        kern/lib/kprintf.c
+        kern/lib/misc.c
+        kern/lib/uio.c
+        kern/proc/proc.c
+        kern/main/main.c
+        kern/main/menu.c
+        kern/syscall/loadelf.c
+        kern/syscall/runprogram.c
+        kern/syscall/time_syscalls.c
+        kern/test/arraytest.c
+        kern/test/bitmaptest.c
+        kern/test/fstest.c
+        kern/test/nettest.c
+        kern/test/synchtest.c
+        kern/test/threadtest.c
+        kern/test/tt3.c
+        kern/thread/clock.c
+        kern/thread/spinlock.c
+        kern/thread/spl.c
+        kern/thread/synch.c
+        kern/thread/thread.c
+        kern/thread/threadlist.c
+        kern/vfs/device.c
+        kern/vfs/devnull.c
+        kern/vfs/vfscwd.c
+        kern/vfs/vfslist.c
+        kern/vfs/vfslookup.c
+        kern/vfs/vfspath.c
+        kern/vfs/vnode.c
+        kern/vm/copyinout.c
+        kern/vm/kmalloc.c
+        userland/bin/cat/cat.c
+        userland/bin/cp/cp.c
+        userland/bin/false/false.c
+        userland/bin/ln/ln.c
+        userland/bin/ls/ls.c
+        userland/bin/mkdir/mkdir.c
+        userland/bin/mv/mv.c
+        userland/bin/pwd/pwd.c
+        userland/bin/rm/rm.c
+        userland/bin/rmdir/rmdir.c
+        userland/bin/sh/sh.c
+        userland/bin/sync/sync.c
+        userland/bin/true/true.c
+        userland/include/sys/endian.h
+        userland/include/sys/ioctl.h
+        userland/include/sys/null.h
+        userland/include/sys/reboot.h
+        userland/include/sys/stat.h
+        userland/include/sys/types.h
+        userland/include/sys/wait.h
+        userland/include/types/size_t.h
+        userland/include/assert.h
+        userland/include/err.h
+        userland/include/errno.h
+        userland/include/fcntl.h
+        userland/include/limits.h
+        userland/include/setjmp.h
+        userland/include/signal.h
+        userland/include/stdarg.h
+        userland/include/stdint.h
+        userland/include/stdio.h
+        userland/include/stdlib.h
+        userland/include/string.h
+        userland/include/time.h
+        userland/include/unistd.h
+        userland/lib/hostcompat/err.c
+        userland/lib/hostcompat/host-err.h
+        userland/lib/hostcompat/hostcompat.c
+        userland/lib/hostcompat/hostcompat.h
+        userland/lib/hostcompat/time.c
+        userland/lib/libc/stdio/__puts.c
+        userland/lib/libc/stdio/getchar.c
+        userland/lib/libc/stdio/printf.c
+        userland/lib/libc/stdio/putchar.c
+        userland/lib/libc/stdio/puts.c
+        userland/lib/libc/stdlib/abort.c
+        userland/lib/libc/stdlib/exit.c
+        userland/lib/libc/stdlib/malloc.c
+        userland/lib/libc/stdlib/random.c
+        userland/lib/libc/stdlib/system.c
+        userland/lib/libc/string/memcmp.c
+        userland/lib/libc/string/strerror.c
+        userland/lib/libc/string/strtok.c
+        userland/lib/libc/time/time.c
+        userland/lib/libc/unix/__assert.c
+        userland/lib/libc/unix/err.c
+        userland/lib/libc/unix/errno.c
+        userland/lib/libc/unix/getcwd.c
+        userland/sbin/dumpsfs/dumpsfs.c
+        userland/sbin/halt/halt.c
+        userland/sbin/mksfs/disk.c
+        userland/sbin/mksfs/disk.h
+        userland/sbin/mksfs/mksfs.c
+        userland/sbin/mksfs/support.c
+        userland/sbin/mksfs/support.h
+        userland/sbin/poweroff/poweroff.c
+        userland/sbin/reboot/reboot.c
+        userland/testbin/add/add.c
+        userland/testbin/argtest/argtest.c
+        userland/testbin/badcall/bad_chdir.c
+        userland/testbin/badcall/bad_close.c
+        userland/testbin/badcall/bad_dup2.c
+        userland/testbin/badcall/bad_execv.c
+        userland/testbin/badcall/bad_fsync.c
+        userland/testbin/badcall/bad_ftruncate.c
+        userland/testbin/badcall/bad_getcwd.c
+        userland/testbin/badcall/bad_getdirentry.c
+        userland/testbin/badcall/bad_ioctl.c
+        userland/testbin/badcall/bad_link.c
+        userland/testbin/badcall/bad_lseek.c
+        userland/testbin/badcall/bad_mkdir.c
+        userland/testbin/badcall/bad_open.c
+        userland/testbin/badcall/bad_pipe.c
+        userland/testbin/badcall/bad_read.c
+        userland/testbin/badcall/bad_readlink.c
+        userland/testbin/badcall/bad_reboot.c
+        userland/testbin/badcall/bad_remove.c
+        userland/testbin/badcall/bad_rename.c
+        userland/testbin/badcall/bad_rmdir.c
+        userland/testbin/badcall/bad_sbrk.c
+        userland/testbin/badcall/bad_stat.c
+        userland/testbin/badcall/bad_symlink.c
+        userland/testbin/badcall/bad_time.c
+        userland/testbin/badcall/bad_waitpid.c
+        userland/testbin/badcall/bad_write.c
+        userland/testbin/badcall/common_buf.c
+        userland/testbin/badcall/common_fds.c
+        userland/testbin/badcall/common_path.c
+        userland/testbin/badcall/config.h
+        userland/testbin/badcall/driver.c
+        userland/testbin/badcall/test.h
+        userland/testbin/bigfile/bigfile.c
+        userland/testbin/conman/conman.c
+        userland/testbin/crash/crash.c
+        userland/testbin/ctest/ctest.c
+        userland/testbin/dirconc/dirconc.c
+        userland/testbin/dirseek/dirseek.c
+        userland/testbin/dirtest/dirtest.c
+        userland/testbin/f_test/f_hdr.h
+        userland/testbin/f_test/f_read.c
+        userland/testbin/f_test/f_test.c
+        userland/testbin/f_test/f_write.c
+        userland/testbin/farm/farm.c
+        userland/testbin/faulter/faulter.c
+        userland/testbin/filetest/filetest.c
+        userland/testbin/forkbomb/forkbomb.c
+        userland/testbin/forktest/forktest.c
+        userland/testbin/hash/hash.c
+        userland/testbin/hog/hog.c
+        userland/testbin/huge/huge.c
+        userland/testbin/malloctest/malloctest.c
+        userland/testbin/matmult/matmult-orig.c
+        userland/testbin/matmult/matmult.c
+        userland/testbin/palin/palin.c
+        userland/testbin/parallelvm/parallelvm.c
+        userland/testbin/psort/psort.c
+        userland/testbin/randcall/extern.h
+        userland/testbin/randcall/main.c
+        userland/testbin/rmdirtest/rmdirtest.c
+        userland/testbin/rmtest/rmtest.c
+        userland/testbin/sort/sort.c
+        userland/testbin/tail/tail.c
+        userland/testbin/tictac/tictac.c
+        userland/testbin/triplehuge/triplehuge.c
+        userland/testbin/triplemat/triplemat.c
+        userland/testbin/triplesort/triplesort.c
+        userland/testbin/zero/zero.c
+        )
