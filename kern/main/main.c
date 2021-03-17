@@ -49,6 +49,7 @@
 #include <syscall.h>
 #include <test.h>
 #include <version.h>
+#include <hello.h>
 #include "autoconf.h"  // for pseudoconfig
 
 
@@ -209,6 +210,10 @@ void
 kmain(char *arguments)
 {
 	boot();
+
+#if OPT_HELLO
+	hello();
+#endif
 
 	menu(arguments);
 

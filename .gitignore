@@ -2,3 +2,4 @@ defs.mk
 cmake-build-debug
 .sockets
 .idea
+kern/compile

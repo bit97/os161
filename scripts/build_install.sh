@@ -1,7 +1,6 @@
-OS161_VERS=DUMBVM
+OS161_VERS=HELLO
 
 cd kern/compile/"${OS161_VERS}" || exit 1
-ls
 bmake depend
 bmake
 bmake install
