@@ -201,7 +201,7 @@ sys_reboot(int code)
 	return 0;
 }
 
-/*
+/**
  * Kernel main. Boot up, then fork the menu thread; wait for a reboot
  * request, and then shut down.
  */
