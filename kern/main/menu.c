@@ -767,7 +767,7 @@ cmd_dispatch(char *cmd)
  * commands.
  *
  * If "isargs" is set, we're doing command-line processing; print the
- * comamnds as we execute them and panic if the command is invalid or fails.
+ * commands as we execute them and panic if the command is invalid or fails.
  */
 static
 void

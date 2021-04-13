@@ -50,6 +50,7 @@
 #include <test.h>
 #include <version.h>
 #include <hello.h>
+#include <opt-threads.h>
 #include "autoconf.h"  // for pseudoconfig
 
 
@@ -72,6 +73,10 @@ static const char harvard_copyright[] =
     "Copyright (c) 2000, 2001-2005, 2008-2011, 2013, 2014\n"
     "   President and Fellows of Harvard College.  All rights reserved.\n";
 
+/*
+ * Author of the further modifications on the base code
+ */
+static const char author[] = "bit";
 
 /*
  * Initial boot sequence.
@@ -102,8 +107,8 @@ boot(void)
 	kprintf("%s", harvard_copyright);
 	kprintf("\n");
 
-	kprintf("Put-your-group-name-here's system version %s (%s #%d)\n",
-		GROUP_VERSION, buildconfig, buildversion);
+	kprintf("%s's system version %s (%s #%d)\n",
+		author, GROUP_VERSION, buildconfig, buildversion);
 	kprintf("\n");
 
 	/* Early initialization. */
@@ -213,6 +218,10 @@ kmain(char *arguments)
 
 #if OPT_HELLO
 	hello();
+#endif
+
+#if OPT_THREADS
+	kprintf("Debugging threads\n");
 #endif
 
 	menu(arguments);
