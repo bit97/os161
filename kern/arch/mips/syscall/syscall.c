@@ -121,6 +121,14 @@ syscall(struct trapframe *tf)
     break;
 #endif /* OPT_SYS_IO */
 
+#if OPT_SYS_PROC
+	    case SYS__exit:
+    sys__exit(tf->tf_a0);
+    err = 0;
+    break;
+#endif /* OPT_SYS_PROC */
+
+
 	    /* Add stuff here */
 
 	    default:

@@ -20,7 +20,5 @@ main(void)
 
 	printf("Read message: %s", buf);
 
-	printf("\n\n\n\n    Will fail on exit syscall\n\n\n\n");
-
 	return 0;
 }

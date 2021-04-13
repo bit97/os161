@@ -85,6 +85,55 @@ proc_create(const char *name)
 	return proc;
 }
 
+void
+proc_destroy_as(struct proc *proc)
+{
+  /*
+		 * If p is the current process, remove it safely from
+		 * p_addrspace before destroying it. This makes sure
+		 * we don't try to activate the address space while
+		 * it's being destroyed.
+		 *
+		 * Also explicitly deactivate, because setting the
+		 * address space to NULL won't necessarily do that.
+		 *
+		 * (When the address space is NULL, it means the
+		 * process is kernel-only; in that case it is normally
+		 * ok if the MMU and MMU- related data structures
+		 * still refer to the address space of the last
+		 * process that had one. Then you save work if that
+		 * process is the next one to run, which isn't
+		 * uncommon. However, here we're going to destroy the
+		 * address space, so we need to make sure that nothing
+		 * in the VM system still refers to it.)
+		 *
+		 * The call to as_deactivate() must come after we
+		 * clear the address space, or a timer interrupt might
+		 * reactivate the old address space again behind our
+		 * back.
+		 *
+		 * If p is not the current process, still remove it
+		 * from p_addrspace before destroying it as a
+		 * precaution. Note that if p is not the current
+		 * process, in order to be here p must either have
+		 * never run (e.g. cleaning up after fork failed) or
+		 * have finished running and exited. It is quite
+		 * incorrect to destroy the proc structure of some
+		 * random other process while it's still running...
+		 */
+  struct addrspace *as;
+
+  if (proc == curproc) {
+    as = proc_setas(NULL);
+    as_deactivate();
+  }
+  else {
+    as = proc->p_addrspace;
+    proc->p_addrspace = NULL;
+  }
+  as_destroy(as);
+}
+
 /*
  * Destroy a proc structure.
  *
@@ -119,50 +168,7 @@ proc_destroy(struct proc *proc)
 
 	/* VM fields */
 	if (proc->p_addrspace) {
-		/*
-		 * If p is the current process, remove it safely from
-		 * p_addrspace before destroying it. This makes sure
-		 * we don't try to activate the address space while
-		 * it's being destroyed.
-		 *
-		 * Also explicitly deactivate, because setting the
-		 * address space to NULL won't necessarily do that.
-		 *
-		 * (When the address space is NULL, it means the
-		 * process is kernel-only; in that case it is normally
-		 * ok if the MMU and MMU- related data structures
-		 * still refer to the address space of the last
-		 * process that had one. Then you save work if that
-		 * process is the next one to run, which isn't
-		 * uncommon. However, here we're going to destroy the
-		 * address space, so we need to make sure that nothing
-		 * in the VM system still refers to it.)
-		 *
-		 * The call to as_deactivate() must come after we
-		 * clear the address space, or a timer interrupt might
-		 * reactivate the old address space again behind our
-		 * back.
-		 *
-		 * If p is not the current process, still remove it
-		 * from p_addrspace before destroying it as a
-		 * precaution. Note that if p is not the current
-		 * process, in order to be here p must either have
-		 * never run (e.g. cleaning up after fork failed) or
-		 * have finished running and exited. It is quite
-		 * incorrect to destroy the proc structure of some
-		 * random other process while it's still running...
-		 */
-		struct addrspace *as;
-
-		if (proc == curproc) {
-			as = proc_setas(NULL);
-			as_deactivate();
-		}
-		else {
-			as = proc->p_addrspace;
-			proc->p_addrspace = NULL;
-		}
-		as_destroy(as);
+		proc_destroy_as(proc);
 	}
 
 	KASSERT(proc->p_numthreads == 0);

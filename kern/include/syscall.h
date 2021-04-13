@@ -31,6 +31,7 @@
 #define _SYSCALL_H_
 
 #include <opt-sys_io.h>
+#include <opt-sys_proc.h>
 #include <types.h>
 #include <cdefs.h> /* for __DEAD */
 struct trapframe; /* from <machine/trapframe.h> */
@@ -64,5 +65,8 @@ int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
 ssize_t sys_write(int fd, userptr_t buf, size_t nbyte);
 ssize_t sys_read(int fd, userptr_t buf, size_t nbyte);
 #endif /* OPT_SYS_IO */
+#if OPT_SYS_PROC
+void sys__exit(int code);
+#endif /* OPT_SYS_PROC */
 
 #endif /* _SYSCALL_H_ */

@@ -42,8 +42,7 @@ sys_read(int fd, userptr_t buf, size_t nbyte)
     ch = (char)getch();
     if (ch == '\n') break;
     ch_buf[n++] = ch;
-  } while (n < u_nbyte - 1);
-  ch_buf[n] = '\0';
+  } while (n < u_nbyte);
 
   return n;
 }

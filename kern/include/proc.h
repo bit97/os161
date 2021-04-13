@@ -71,6 +71,7 @@ struct proc {
 	struct vnode *p_cwd;		/* current working directory */
 
 	/* add more material here as needed */
+	int p_exitcode;
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */
@@ -85,6 +86,9 @@ struct proc *proc_create_runprogram(const char *name);
 /* Destroy a process. */
 void proc_destroy(struct proc *proc);
 
+/* Destroy the address space related to the process */
+void proc_destroy_as(struct proc *proc);
+
 /* Attach a thread to a process. Must not already have a process. */
 int proc_addthread(struct proc *proc, struct thread *t);
 
@@ -96,6 +100,5 @@ struct addrspace *proc_getas(void);
 
 /* Change the address space of the current process, and return the old one. */
 struct addrspace *proc_setas(struct addrspace *);
-
 
 #endif /* _PROC_H_ */

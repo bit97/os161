@@ -449,9 +449,12 @@ optfile net	test/nettest.c
 #                                      #
 ########################################
 defoption hello
-optfile   hello main/hello.c
+optfile   hello     main/hello.c
 
 defoption threads
 
 defoption sys_io
-optfile   sys_io syscall/io_syscalls.c
+optfile   sys_io    syscall/io_syscalls.c
+
+defoption sys_proc
+optfile   sys_proc  syscall/proc_syscalls.c
