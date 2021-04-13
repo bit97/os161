@@ -111,7 +111,13 @@ syscall(struct trapframe *tf)
 
 #if OPT_SYS_IO
       case SYS_write:
-    err = sys_write(tf->tf_a0, (userptr_t)tf->tf_a1, tf->tf_a2);
+    err = retval = sys_write(tf->tf_a0, (userptr_t)tf->tf_a1, tf->tf_a2);
+    if (retval >= 0) err = 0;
+    break;
+
+	    case SYS_read:
+    err = retval = sys_read(tf->tf_a0, (userptr_t)tf->tf_a1, tf->tf_a2);
+    if (retval >= 0) err = 0;
     break;
 #endif /* OPT_SYS_IO */
 
