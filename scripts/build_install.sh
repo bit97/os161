@@ -1,4 +1,4 @@
-OS161_VERS=THREADS
+OS161_VERS=SYSCALLS
 
 cd kern/compile/"${OS161_VERS}" || exit 1
 bmake depend

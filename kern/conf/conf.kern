@@ -452,3 +452,6 @@ defoption hello
 optfile   hello main/hello.c
 
 defoption threads
+
+defoption sys_io
+optfile   sys_io syscall/io_syscalls.c

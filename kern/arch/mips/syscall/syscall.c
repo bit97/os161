@@ -109,6 +109,12 @@ syscall(struct trapframe *tf)
 				 (userptr_t)tf->tf_a1);
 		break;
 
+#if OPT_SYS_IO
+      case SYS_write:
+    err = sys_write(tf->tf_a0, (userptr_t)tf->tf_a1, tf->tf_a2);
+    break;
+#endif /* OPT_SYS_IO */
+
 	    /* Add stuff here */
 
 	    default:

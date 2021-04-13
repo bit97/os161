@@ -30,9 +30,11 @@
 #ifndef _SYSCALL_H_
 #define _SYSCALL_H_
 
-
+#include <opt-sys_io.h>
+#include <types.h>
 #include <cdefs.h> /* for __DEAD */
 struct trapframe; /* from <machine/trapframe.h> */
+
 
 /*
  * The system call dispatcher.
@@ -58,5 +60,8 @@ __DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env,
 
 int sys_reboot(int code);
 int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
+#if OPT_SYS_IO
+int sys_write(int fd, userptr_t buf, size_t nbyte);
+#endif /* OPT_SYS_IO */
 
 #endif /* _SYSCALL_H_ */
