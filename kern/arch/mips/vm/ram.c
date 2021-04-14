@@ -97,6 +97,12 @@ ram_stealmem(unsigned long npages)
 	size_t size;
 	paddr_t paddr;
 
+	/*
+	 * Check that we're on the first phases of memory management
+	 */
+  KASSERT(firstpaddr > 0);
+  KASSERT(lastpaddr > 0);
+
 	size = npages * PAGE_SIZE;
 
 	if (firstpaddr + size > lastpaddr) {
@@ -151,3 +157,21 @@ ram_getfirstfree(void)
 	firstpaddr = lastpaddr = 0;
 	return ret;
 }
+
+
+#if OPT_VM_ALLOC
+
+/*
+ * This function is intended to be called in the first phases of VM initialization
+ * in order to obtain the free space in RAM. It has to be called, then, only once
+ */
+size_t
+ram_getfreespace(void)
+{
+  KASSERT(firstpaddr > 0);
+  KASSERT(lastpaddr > 0);
+
+  return (size_t)(lastpaddr - firstpaddr);
+}
+
+#endif /* OPT_VM_ALLOC */

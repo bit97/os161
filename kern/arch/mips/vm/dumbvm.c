@@ -64,10 +64,76 @@
  */
 static struct spinlock stealmem_lock = SPINLOCK_INITIALIZER;
 
+typedef enum {
+  PAGE_FREE, PAGE_ALLOC
+} page_status;
+/**
+ * RAM parallel array which stores the status of each page (PAGE_FREE, PAGE_ALLOC).
+ */
+static page_status* free_ram_frames;
+/**
+ * Support array for multi-page allocation. It stores the number of contiguous
+ * allocated pages at the first block index, while the other blocks have invalid values
+ */
+static unsigned* count_allocated;
+static paddr_t first_vm_paddr, last_vm_paddr;
+static ssize_t n_ram_frames = -1;
+
+static
+unsigned
+needed_npages(size_t free_space)
+{
+  unsigned n_pages, n_pages_old;
+
+  n_pages = n_pages_old = free_space / PAGE_SIZE;
+
+  /* Remove space needed from the data structures themselves */
+  free_space -= n_pages * (sizeof(bool) + sizeof(*count_allocated));
+
+  /* Recompute the number of free pages */
+  n_pages = free_space / PAGE_SIZE;
+  KASSERT(n_pages < n_pages_old);
+
+  return n_pages;
+}
+
+/**
+ * Initialize data structure for pages management (i.e. reallocation)
+ */
 void
 vm_bootstrap(void)
 {
-	/* Do nothing. */
+  size_t free_space;
+  unsigned n_pages;
+
+  /*
+   *  First allocate auxiliary data structure, since ram_stealmem()
+   *  won't work in a while.
+   *
+   *  Subtract data structure size and align to page size
+   */
+  free_space = ram_getfreespace();
+  KASSERT((free_space & PAGE_FRAME) == free_space);
+  n_pages = needed_npages(free_space);
+
+  free_ram_frames = kmalloc(sizeof(page_status) * n_pages);
+  count_allocated = kmalloc(sizeof(*count_allocated) * n_pages);
+  n_ram_frames = n_pages;
+
+  last_vm_paddr = ram_getsize();
+  first_vm_paddr = ram_getfirstfree();
+
+  /*
+   * From now on the ram_stealmem() function won't work anymore.
+   * We are fully relying on the VM system for memory management
+   */
+
+  KASSERT(first_vm_paddr > 0);
+  KASSERT(last_vm_paddr > 0);
+  KASSERT((first_vm_paddr & PAGE_FRAME) == first_vm_paddr);
+  KASSERT((last_vm_paddr & PAGE_FRAME) == last_vm_paddr);
+
+  bzero((void*)free_ram_frames, sizeof(page_status) * n_pages);
 }
 
 /*
@@ -94,11 +160,43 @@ static
 paddr_t
 getppages(unsigned long npages)
 {
+  bool found = 0;
+  unsigned long pos, start;
 	paddr_t addr;
 
 	spinlock_acquire(&stealmem_lock);
 
-	addr = ram_stealmem(npages);
+	if (n_ram_frames < 0) {
+	  /*
+	   * We're in the early phases of bootstrap -> go with the old method
+	   */
+  	addr = ram_stealmem(npages);
+	} else {
+    for (pos = 0; pos < (unsigned)n_ram_frames; pos++) {
+      if (free_ram_frames[pos] == PAGE_FREE) {
+        if (pos == 0 || free_ram_frames[pos - 1] == PAGE_ALLOC) {
+          start = pos;
+        }
+        if (pos - start + 1 >= npages) {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (found) {
+      /* Mark blocks as allocated */
+      for (pos = start; pos < start + npages; pos++) {
+        free_ram_frames[pos] = PAGE_ALLOC;
+      }
+      /* Keep track of allocated blocks number */
+      count_allocated[start] = (unsigned) npages;
+      /* Compute starting address */
+      addr = first_vm_paddr + (paddr_t) start * PAGE_SIZE;
+    } else {
+      addr = 0;
+    }
+  }
 
 	spinlock_release(&stealmem_lock);
 	return addr;
@@ -257,6 +355,7 @@ void
 as_destroy(struct addrspace *as)
 {
 	dumbvm_can_sleep();
+	// TODO free addrspace memory areas
 	kfree(as);
 }
 

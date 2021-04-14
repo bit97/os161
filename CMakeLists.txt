@@ -20,4 +20,4 @@ include_directories(userland/include)
 file(GLOB_RECURSE INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/*.h")
 file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/*.c")
 
-add_executable (os161_C ${INCLUDE_DIRECTORIES} ${SOURCE_FILES})
+add_executable (os161_C ${INCLUDE_DIRECTORIES} ${SOURCE_FILES} kern/lib/linked_list.c)
