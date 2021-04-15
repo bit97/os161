@@ -35,6 +35,7 @@
  * functions.
  */
 
+#include <opt-vm_alloc.h>
 
 /*
  * Test code.
@@ -94,6 +95,11 @@ int kmallocstress(int, char **);
 int kmalloctest3(int, char **);
 int kmalloctest4(int, char **);
 int nettest(int, char **);
+
+#if OPT_VM_ALLOC
+/* virtual memory tests */
+int memstats(int nargs, char **args);
+#endif /* OPT_VM_ALLOC */
 
 /* Routine for running a user-level program. */
 int runprogram(char *progname);

@@ -577,6 +577,9 @@ static const char *testmenu[] = {
 	"[fs4] FS write stress 2             ",
 	"[fs5] FS long stress                ",
 	"[fs6] FS create stress              ",
+#if OPT_VM_ALLOC
+  "[memstats] VM test                  ",
+#endif /* OPT_VM_ALLOC */
 	NULL
 };
 
@@ -706,6 +709,11 @@ static struct {
 	{ "fs4",	writestress2 },
 	{ "fs5",	longstress },
 	{ "fs6",	createstress },
+
+#if OPT_VM_ALLOC
+	/* virtual memory tests */
+  {"memstats", memstats},
+#endif /* OPT_VM_ALLOC */
 
 	{ NULL, NULL }
 };

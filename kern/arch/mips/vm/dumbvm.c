@@ -64,6 +64,7 @@
  */
 static struct spinlock stealmem_lock = SPINLOCK_INITIALIZER;
 
+#if OPT_VM_ALLOC
 typedef enum {
   PAGE_FREE, PAGE_ALLOC
 } page_status;
@@ -78,9 +79,7 @@ static page_status* free_ram_frames;
 static unsigned* count_allocated;
 static paddr_t first_vm_paddr, last_vm_paddr;
 static ssize_t n_ram_frames = -1;
-
-// debug
-static unsigned count_alloc_pages;
+static unsigned n_ram_frames_alloc;
 
 #define VM_ACTIVE (n_ram_frames > 0)
 
@@ -101,6 +100,7 @@ needed_npages(size_t free_space)
 
   return n_pages;
 }
+#endif /* OPT_VM_ALLOC */
 
 /**
  * Initialize data structure for pages management (i.e. reallocation)
@@ -108,6 +108,7 @@ needed_npages(size_t free_space)
 void
 vm_bootstrap(void)
 {
+#if OPT_VM_ALLOC
   size_t free_space;
   unsigned n_pages;
 
@@ -127,7 +128,7 @@ vm_bootstrap(void)
 
   last_vm_paddr = ram_getsize();
   first_vm_paddr = ram_getfirstfree();
-  count_alloc_pages = 0;
+  n_ram_frames_alloc = 0;
 
   /*
    * From now on the ram_stealmem() function won't work anymore.
@@ -141,6 +142,7 @@ vm_bootstrap(void)
 
   bzero((void*)free_ram_frames, sizeof(page_status) * n_pages);
   bzero((void*)count_allocated, sizeof(*count_allocated) * n_pages);
+#endif /* OPT_VM_ALLOC */
 }
 
 /*
@@ -167,12 +169,14 @@ static
 paddr_t
 getppages(unsigned long npages)
 {
+#if OPT_VM_ALLOC
   bool found = 0;
   unsigned long pos, start;
+#endif /* OPT_VM_ALLOC */
 	paddr_t addr;
 
 	spinlock_acquire(&stealmem_lock);
-
+#if OPT_VM_ALLOC
 	if (!VM_ACTIVE) {
 	  /*
 	   * We're in the early phases of bootstrap so we go with the old method
@@ -198,13 +202,16 @@ getppages(unsigned long npages)
       }
       /* Keep track of allocated blocks number */
       count_allocated[start] = (unsigned) npages;
-      count_alloc_pages += npages;
+      n_ram_frames_alloc += npages;
       /* Compute starting address */
       addr = first_vm_paddr + (paddr_t) start * PAGE_SIZE;
     } else {
       addr = 0;
     }
   }
+#else  /* Dumbier method */
+  addr = ram_stealmem(npages);
+#endif /* OPT_VM_ALLOC */
 
 	spinlock_release(&stealmem_lock);
 	return addr;
@@ -224,6 +231,7 @@ alloc_kpages(unsigned npages)
 	return PADDR_TO_KVADDR(pa);
 }
 
+#if OPT_VM_ALLOC
 static
 void
 freeppages(paddr_t addr)
@@ -247,16 +255,24 @@ freeppages(paddr_t addr)
   for (i = pos; i < pos + npages; i++)
     free_ram_frames[i] = PAGE_FREE;
   count_allocated[pos] = 0;
-  count_alloc_pages -= npages;
+  n_ram_frames_alloc -= npages;
 }
+#endif /* OPT_VM_ALLOC */
 
 void
 free_kpages(vaddr_t addr)
 {
+#if OPT_VM_ALLOC
   paddr_t p_addr = addr - MIPS_KSEG0;
   KASSERT(p_addr);
 
   freeppages(p_addr);
+#else
+  /*
+   * Do nothing. Leak the memory
+   */
+  (void)addr;
+#endif /* OPT_VM_ALLOC */
 }
 
 void
@@ -391,11 +407,13 @@ as_destroy(struct addrspace *as)
 {
 	dumbvm_can_sleep();
 
+#if OPT_VM_ALLOC
   freeppages(as->as_pbase1);
   freeppages(as->as_pbase2);
   freeppages(as->as_stackpbase);
+#endif /* OPT_VM_ALLOC */
 
-	kfree(as);
+  kfree(as);
 }
 
 void
@@ -563,3 +581,65 @@ as_copy(struct addrspace *old, struct addrspace **ret)
 	*ret = new;
 	return 0;
 }
+
+/* Test utilities */
+#if OPT_VM_ALLOC
+
+/**
+ * Get the RAM size (obtained during early stage of bootstrap)
+ * @return  RAM size in KiB
+ */
+unsigned
+ram_gettotal(void)
+{
+  return last_vm_paddr / 1024;
+}
+
+/**
+ * Get the portion of RAM dedicated to the kernel (included the auxiliary VM
+ * data structures)
+ * @return  kernel RAM in KiB
+ */
+unsigned
+ram_getkernel(void)
+{
+  return first_vm_paddr / 1024;
+}
+
+/**
+ * Return the number of page that the VM is able to allocate (both for kernel
+ * and userspace needs)
+ * @return  Number of allocatable pages
+ */
+unsigned
+ram_gettotalpages(void)
+{
+  return (unsigned)n_ram_frames;
+}
+
+/**
+ * Return the number of *actually* allocated pages
+ * @return  Number of *actually* allocated pages
+ */
+unsigned
+ram_getallocatedpages(void)
+{
+  return n_ram_frames_alloc;
+}
+
+/**
+ * Check (as much as possible) if there has been a memory leakage until now.
+ * @return  Number of leaked page.
+ */
+unsigned ram_leaked(void)
+{
+  /*
+   * Since the 'memstats' is invoked directly by the kernel without
+   * creating a new thread, and so without allocating any memory, we can
+   * return directly the number of already allocated pages, that will hopefully
+   * be zero
+   */
+  return n_ram_frames_alloc;
+}
+
+#endif /* OPT_VM_ALLOC */

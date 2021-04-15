@@ -31,6 +31,7 @@
 #define _MIPS_VM_H_
 
 #include <opt-vm_alloc.h>
+#include <types.h>
 
 /*
  * Machine-dependent VM system definitions.
@@ -112,6 +113,12 @@ paddr_t ram_getsize(void);
 paddr_t ram_getfirstfree(void);
 #if OPT_VM_ALLOC
 size_t ram_getfreespace(void);
+/* Test purposes */
+unsigned ram_gettotal(void);
+unsigned ram_getkernel(void);
+unsigned ram_gettotalpages(void);
+unsigned ram_getallocatedpages(void);
+unsigned ram_leaked(void);
 #endif /* OPT_VM_ALLOC */
 
 /*

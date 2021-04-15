@@ -460,6 +460,7 @@ defoption sys_proc
 optfile   sys_proc  syscall/proc_syscalls.c
 
 defoption vm_alloc
+optfile   vm_alloc  test/memstats.c
 
 defoption data_struct
 optfile   data_struct lib/linked_list.c
