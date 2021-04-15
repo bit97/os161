@@ -73,11 +73,16 @@ typedef enum {
 static page_status* free_ram_frames;
 /**
  * Support array for multi-page allocation. It stores the number of contiguous
- * allocated pages at the first block index, while the other blocks have invalid values
+ * allocated pages at the first block index, while the other blocks have zero values
  */
 static unsigned* count_allocated;
 static paddr_t first_vm_paddr, last_vm_paddr;
 static ssize_t n_ram_frames = -1;
+
+// debug
+static unsigned count_alloc_pages;
+
+#define VM_ACTIVE (n_ram_frames > 0)
 
 static
 unsigned
@@ -122,6 +127,7 @@ vm_bootstrap(void)
 
   last_vm_paddr = ram_getsize();
   first_vm_paddr = ram_getfirstfree();
+  count_alloc_pages = 0;
 
   /*
    * From now on the ram_stealmem() function won't work anymore.
@@ -134,6 +140,7 @@ vm_bootstrap(void)
   KASSERT((last_vm_paddr & PAGE_FRAME) == last_vm_paddr);
 
   bzero((void*)free_ram_frames, sizeof(page_status) * n_pages);
+  bzero((void*)count_allocated, sizeof(*count_allocated) * n_pages);
 }
 
 /*
@@ -166,9 +173,9 @@ getppages(unsigned long npages)
 
 	spinlock_acquire(&stealmem_lock);
 
-	if (n_ram_frames < 0) {
+	if (!VM_ACTIVE) {
 	  /*
-	   * We're in the early phases of bootstrap -> go with the old method
+	   * We're in the early phases of bootstrap so we go with the old method
 	   */
   	addr = ram_stealmem(npages);
 	} else {
@@ -191,6 +198,7 @@ getppages(unsigned long npages)
       }
       /* Keep track of allocated blocks number */
       count_allocated[start] = (unsigned) npages;
+      count_alloc_pages += npages;
       /* Compute starting address */
       addr = first_vm_paddr + (paddr_t) start * PAGE_SIZE;
     } else {
@@ -216,12 +224,39 @@ alloc_kpages(unsigned npages)
 	return PADDR_TO_KVADDR(pa);
 }
 
+static
+void
+freeppages(paddr_t addr)
+{
+  unsigned npages, pos, i;
+
+  /* Cannot recycle memory before VM initialization */
+  if (!VM_ACTIVE) return;
+
+  /* Page align the physical address */
+  addr &= PAGE_FRAME;
+
+  KASSERT(addr >= first_vm_paddr);
+
+  /* Retrieve index of first block */
+  pos = (addr - first_vm_paddr)/PAGE_SIZE;
+  npages = count_allocated[pos];
+
+  KASSERT(npages > 0);
+
+  for (i = pos; i < pos + npages; i++)
+    free_ram_frames[i] = PAGE_FREE;
+  count_allocated[pos] = 0;
+  count_alloc_pages -= npages;
+}
+
 void
 free_kpages(vaddr_t addr)
 {
-	/* nothing - leak the memory. */
+  paddr_t p_addr = addr - MIPS_KSEG0;
+  KASSERT(p_addr);
 
-	(void)addr;
+  freeppages(p_addr);
 }
 
 void
@@ -355,7 +390,11 @@ void
 as_destroy(struct addrspace *as)
 {
 	dumbvm_can_sleep();
-	// TODO free addrspace memory areas
+
+  freeppages(as->as_pbase1);
+  freeppages(as->as_pbase2);
+  freeppages(as->as_stackpbase);
+
 	kfree(as);
 }
 
