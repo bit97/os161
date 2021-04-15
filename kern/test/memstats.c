@@ -42,7 +42,7 @@ memstats(int nargs, char **args)
   kprintf("Kernel RAM:                 %u KiB (%d%%)\n",
           kernel_ram,
           perc(kernel_ram, total_ram));
-  kprintf("Userspace RAM:              %u KiB (%d%%)\n",
+  kprintf("Allocatable RAM:            %u KiB (%d%%)\n",
           total_ram - kernel_ram,
           perc(total_ram - kernel_ram, total_ram));
   kprintf("\n");
