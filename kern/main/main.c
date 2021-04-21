@@ -51,6 +51,7 @@
 #include <version.h>
 #include <hello.h>
 #include <opt-threads.h>
+#include <opt-data_struct.h>
 #include "autoconf.h"  // for pseudoconfig
 
 
@@ -218,6 +219,11 @@ kmain(char *arguments)
 
 #if OPT_HELLO
 	hello();
+#endif
+
+#if OPT_DATA_STRUCT
+  kprintf("Running some tests..\n");
+  bitmaptest(/*unused*/1, /*unused*/(char**)0);
 #endif
 
 #if OPT_THREADS

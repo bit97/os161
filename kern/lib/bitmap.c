@@ -36,141 +36,161 @@
 #include <lib.h>
 #include <bitmap.h>
 
-/*
- * It would be a lot more efficient on most platforms to use uint32_t
- * or unsigned long as the base type for holding bits. But we don't,
- * because if one uses any data type more than a single byte wide,
- * bitmap data saved on disk becomes endian-dependent, which is a
- * severe nuisance.
- */
-#define BITS_PER_WORD   (CHAR_BIT)
-#define WORD_TYPE       unsigned char
-#define WORD_ALLBITS    (0xff)
-
 struct bitmap {
-        unsigned nbits;
-        WORD_TYPE *v;
+  unsigned nbits;
+  WORD_TYPE *v;
 };
 
 
-struct bitmap *
-bitmap_create(unsigned nbits)
+struct bitmap *bitmap_create(unsigned nbits)
 {
-        struct bitmap *b;
-        unsigned words;
+  struct bitmap *b;
+  unsigned words;
 
-        words = DIVROUNDUP(nbits, BITS_PER_WORD);
-        b = kmalloc(sizeof(struct bitmap));
-        if (b == NULL) {
-                return NULL;
+  words = DIVROUNDUP(nbits, BITS_PER_WORD);
+  b = kmalloc(sizeof(struct bitmap));
+  if (b == NULL) {
+    return NULL;
+  }
+  b->v = kmalloc(words * sizeof(WORD_TYPE));
+  if (b->v == NULL) {
+    kfree(b);
+    return NULL;
+  }
+
+  bzero(b->v, words * sizeof(WORD_TYPE));
+  b->nbits = nbits;
+
+  /* Mark any leftover bits at the end in use */
+  if (words > nbits / BITS_PER_WORD) {
+    unsigned j, ix = words - 1;
+    unsigned overbits = nbits - ix * BITS_PER_WORD;
+
+    KASSERT(nbits / BITS_PER_WORD == words - 1);
+    KASSERT(overbits > 0 && overbits < BITS_PER_WORD);
+
+    for (j = overbits; j < BITS_PER_WORD; j++) {
+      b->v[ix] |= ((WORD_TYPE) 1 << j);
+    }
+  }
+
+  return b;
+}
+
+void *bitmap_getdata(struct bitmap *b)
+{
+  return b->v;
+}
+
+int bitmap_alloc(struct bitmap *b, unsigned *index)
+{
+  unsigned ix;
+  unsigned maxix = DIVROUNDUP(b->nbits, BITS_PER_WORD);
+  unsigned offset;
+
+  for (ix = 0; ix < maxix; ix++) {
+    if (b->v[ix] != WORD_ALLBITS) {
+      for (offset = 0; offset < BITS_PER_WORD; offset++) {
+        WORD_TYPE mask = ((WORD_TYPE) 1) << offset;
+
+        if ((b->v[ix] & mask) == 0) {
+          b->v[ix] |= mask;
+          *index = (ix * BITS_PER_WORD) + offset;
+          KASSERT(*index < b->nbits);
+          return 0;
         }
-        b->v = kmalloc(words*sizeof(WORD_TYPE));
-        if (b->v == NULL) {
-                kfree(b);
-                return NULL;
-        }
-
-        bzero(b->v, words*sizeof(WORD_TYPE));
-        b->nbits = nbits;
-
-        /* Mark any leftover bits at the end in use */
-        if (words > nbits / BITS_PER_WORD) {
-                unsigned j, ix = words-1;
-                unsigned overbits = nbits - ix*BITS_PER_WORD;
-
-                KASSERT(nbits / BITS_PER_WORD == words-1);
-                KASSERT(overbits > 0 && overbits < BITS_PER_WORD);
-
-                for (j=overbits; j<BITS_PER_WORD; j++) {
-                        b->v[ix] |= ((WORD_TYPE)1 << j);
-                }
-        }
-
-        return b;
+      }
+      KASSERT(0);
+    }
+  }
+  return ENOSPC;
 }
 
-void *
-bitmap_getdata(struct bitmap *b)
+static inline void bitmap_translate(unsigned bitno, unsigned *ix, WORD_TYPE *mask)
 {
-        return b->v;
+  unsigned offset;
+  *ix = bitno / BITS_PER_WORD;
+  offset = bitno % BITS_PER_WORD;
+  *mask = ((WORD_TYPE) 1) << offset;
 }
 
-int
-bitmap_alloc(struct bitmap *b, unsigned *index)
+void bitmap_mark(struct bitmap *b, unsigned index)
 {
-        unsigned ix;
-        unsigned maxix = DIVROUNDUP(b->nbits, BITS_PER_WORD);
-        unsigned offset;
+  unsigned ix;
+  WORD_TYPE mask;
 
-        for (ix=0; ix<maxix; ix++) {
-                if (b->v[ix]!=WORD_ALLBITS) {
-                        for (offset = 0; offset < BITS_PER_WORD; offset++) {
-                                WORD_TYPE mask = ((WORD_TYPE)1) << offset;
+  KASSERT(index < b->nbits);
+  bitmap_translate(index, &ix, &mask);
 
-                                if ((b->v[ix] & mask)==0) {
-                                        b->v[ix] |= mask;
-                                        *index = (ix*BITS_PER_WORD)+offset;
-                                        KASSERT(*index < b->nbits);
-                                        return 0;
-                                }
-                        }
-                        KASSERT(0);
-                }
-        }
-        return ENOSPC;
+  KASSERT((b->v[ix] & mask) == 0);
+  b->v[ix] |= mask;
 }
 
-static
-inline
-void
-bitmap_translate(unsigned bitno, unsigned *ix, WORD_TYPE *mask)
+void bitmap_unmark(struct bitmap *b, unsigned index)
 {
-        unsigned offset;
-        *ix = bitno / BITS_PER_WORD;
-        offset = bitno % BITS_PER_WORD;
-        *mask = ((WORD_TYPE)1) << offset;
+  unsigned ix;
+  WORD_TYPE mask;
+
+  KASSERT(index < b->nbits);
+  bitmap_translate(index, &ix, &mask);
+
+  KASSERT((b->v[ix] & mask) != 0);
+  b->v[ix] &= ~mask;
 }
 
-void
-bitmap_mark(struct bitmap *b, unsigned index)
+
+int bitmap_isset(struct bitmap *b, unsigned index)
 {
-        unsigned ix;
-        WORD_TYPE mask;
+  unsigned ix;
+  WORD_TYPE mask;
 
-        KASSERT(index < b->nbits);
-        bitmap_translate(index, &ix, &mask);
-
-        KASSERT((b->v[ix] & mask)==0);
-        b->v[ix] |= mask;
+  bitmap_translate(index, &ix, &mask);
+  return (b->v[ix] & mask);
 }
 
-void
-bitmap_unmark(struct bitmap *b, unsigned index)
+void bitmap_destroy(struct bitmap *b)
 {
-        unsigned ix;
-        WORD_TYPE mask;
-
-        KASSERT(index < b->nbits);
-        bitmap_translate(index, &ix, &mask);
-
-        KASSERT((b->v[ix] & mask)!=0);
-        b->v[ix] &= ~mask;
+  kfree(b->v);
+  kfree(b);
 }
 
+#if OPT_DATA_STRUCT
 
-int
-bitmap_isset(struct bitmap *b, unsigned index)
+int bitmap_n_alloc(struct bitmap *b, unsigned n, unsigned *index)
 {
-        unsigned ix;
-        WORD_TYPE mask;
+  unsigned pos, start;
+  bool found;
 
-        bitmap_translate(index, &ix, &mask);
-        return (b->v[ix] & mask);
+  for (pos = 0, found = false; pos < b->nbits; pos++) {
+    if (bitmap_isset(b, pos) == 0) {
+      if (pos == 0 || bitmap_isset(b, pos - 1)) start = pos;
+      if (pos - start + 1 >= n) {
+        found = true;
+        break;
+      }
+    }
+  }
+
+  if (found) {
+    *index = start;
+    return 0;
+  }
+
+  return ENOSPC;
 }
 
-void
-bitmap_destroy(struct bitmap *b)
+void bitmap_n_mark(struct bitmap *b, unsigned n, unsigned index)
 {
-        kfree(b->v);
-        kfree(b);
+  unsigned i;
+  for (i = 0; i < n; i++)
+    bitmap_mark(b, index + i);
 }
+
+void bitmap_n_unmark(struct bitmap *b, unsigned n, unsigned index)
+{
+  unsigned i;
+  for (i = 0; i < n; i++)
+    bitmap_unmark(b, index + i);
+}
+
+#endif /* OPT_DATA_STRUCT */

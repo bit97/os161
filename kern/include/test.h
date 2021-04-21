@@ -36,6 +36,7 @@
  */
 
 #include <opt-vm_alloc.h>
+#include <opt-data_struct.h>
 
 /*
  * Test code.
@@ -45,6 +46,9 @@
 int arraytest(int, char **);
 int arraytest2(int, char **);
 int bitmaptest(int, char **);
+#if OPT_DATA_STRUCT
+int bitmaptest_multi(int, char **);
+#endif /* OPT_DATA_STRUCT */
 int threadlisttest(int, char **);
 
 /* thread tests */

@@ -38,6 +38,10 @@
 #include <mips/tlb.h>
 #include <addrspace.h>
 #include <vm.h>
+#include <opt-data_struct.h>
+#if OPT_DATA_STRUCT
+#include <bitmap.h>
+#endif
 
 /*
  * Dumb MIPS-only "VM system" that is intended to only be just barely
@@ -65,6 +69,9 @@
 static struct spinlock stealmem_lock = SPINLOCK_INITIALIZER;
 
 #if OPT_VM_ALLOC
+#if OPT_DATA_STRUCT
+static struct bitmap* free_ram_frames;
+#else
 typedef enum {
   PAGE_FREE, PAGE_ALLOC
 } page_status;
@@ -72,6 +79,7 @@ typedef enum {
  * RAM parallel array which stores the status of each page (PAGE_FREE, PAGE_ALLOC).
  */
 static page_status* free_ram_frames;
+#endif /* OPT_DATA_STRUCT */
 /**
  * Support array for multi-page allocation. It stores the number of contiguous
  * allocated pages at the first block index, while the other blocks have zero values
@@ -92,7 +100,11 @@ needed_npages(size_t free_space)
   n_pages = n_pages_old = free_space / PAGE_SIZE;
 
   /* Remove space needed from the data structures themselves */
+#if OPT_DATA_STRUCT
+  free_space -= n_pages * sizeof(*count_allocated) + DIVROUNDUP(n_pages, BITS_PER_WORD);
+#else
   free_space -= n_pages * (sizeof(bool) + sizeof(*count_allocated));
+#endif
 
   /* Recompute the number of free pages */
   n_pages = free_space / PAGE_SIZE;
@@ -122,7 +134,11 @@ vm_bootstrap(void)
   KASSERT((free_space & PAGE_FRAME) == free_space);
   n_pages = needed_npages(free_space);
 
+#if OPT_DATA_STRUCT
+  free_ram_frames = bitmap_create(n_pages);
+#else
   free_ram_frames = kmalloc(sizeof(page_status) * n_pages);
+#endif
   count_allocated = kmalloc(sizeof(*count_allocated) * n_pages);
   n_ram_frames = n_pages;
 
@@ -140,7 +156,9 @@ vm_bootstrap(void)
   KASSERT((first_vm_paddr & PAGE_FRAME) == first_vm_paddr);
   KASSERT((last_vm_paddr & PAGE_FRAME) == last_vm_paddr);
 
+#if !OPT_DATA_STRUCT
   bzero((void*)free_ram_frames, sizeof(page_status) * n_pages);
+#endif
   bzero((void*)count_allocated, sizeof(*count_allocated) * n_pages);
 #endif /* OPT_VM_ALLOC */
 }
@@ -171,7 +189,7 @@ getppages(unsigned long npages)
 {
 #if OPT_VM_ALLOC
   bool found = 0;
-  unsigned long pos, start;
+  unsigned pos, start;
 #endif /* OPT_VM_ALLOC */
 	paddr_t addr;
 
@@ -183,23 +201,34 @@ getppages(unsigned long npages)
 	   */
   	addr = ram_stealmem(npages);
 	} else {
+#if OPT_DATA_STRUCT
+    (void)pos;
+	  found = bitmap_n_alloc(free_ram_frames, (unsigned)npages, &start) == 0;
+#else
     for (pos = 0; pos < (unsigned)n_ram_frames; pos++) {
       if (free_ram_frames[pos] == PAGE_FREE) {
         if (pos == 0 || free_ram_frames[pos - 1] == PAGE_ALLOC) {
           start = pos;
         }
-        if (pos - start + 1 >= npages) {
+        if (pos - start + 1 >= (unsigned)npages) {
           found = true;
           break;
         }
       }
     }
+#endif /* OPT_DATA_STRUCT */
+
+    /* We have the valid 'start' variable if 'found' is true */
 
     if (found) {
       /* Mark blocks as allocated */
+#if OPT_DATA_STRUCT
+      bitmap_n_mark(free_ram_frames, (unsigned) npages, start);
+#else
       for (pos = start; pos < start + npages; pos++) {
         free_ram_frames[pos] = PAGE_ALLOC;
       }
+#endif /* OPT_DATA_STRUCT */
       /* Keep track of allocated blocks number */
       count_allocated[start] = (unsigned) npages;
       n_ram_frames_alloc += npages;
@@ -252,8 +281,13 @@ freeppages(paddr_t addr)
 
   KASSERT(npages > 0);
 
+#if OPT_DATA_STRUCT
+  (void)i;
+  bitmap_n_unmark(free_ram_frames, npages, pos);
+#else
   for (i = pos; i < pos + npages; i++)
     free_ram_frames[i] = PAGE_FREE;
+#endif /* OPT_DATA_STRUCT */
   count_allocated[pos] = 0;
   n_ram_frames_alloc -= npages;
 }

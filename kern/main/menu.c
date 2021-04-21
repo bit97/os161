@@ -555,6 +555,9 @@ static const char *testmenu[] = {
 	"[at]  Array test                    ",
 	"[at2] Large array test              ",
 	"[bt]  Bitmap test                   ",
+#if OPT_DATA_STRUCT
+  "[btm] Bitmap multi test             ",
+#endif
 	"[tlt] Threadlist test               ",
 	"[km1] Kernel malloc test            ",
 	"[km2] kmalloc stress test           ",
@@ -660,6 +663,9 @@ static struct {
 	{ "at",		arraytest },
 	{ "at2",	arraytest2 },
 	{ "bt",		bitmaptest },
+#if OPT_DATA_STRUCT
+  { "btm", bitmaptest_multi },
+#endif
 	{ "tlt",	threadlisttest },
 	{ "km1",	kmalloctest },
 	{ "km2",	kmallocstress },

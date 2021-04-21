@@ -104,3 +104,69 @@ bitmaptest(int nargs, char **args)
 	kprintf("Bitmap test complete\n");
 	return 0;
 }
+
+#if OPT_DATA_STRUCT
+
+#define MULTITESTSIZE 15
+
+int
+bitmaptest_multi(int nargs, char **args)
+{
+  struct bitmap *b;
+  unsigned i;
+
+  (void)nargs;
+  (void)args;
+
+  kprintf("Starting bitmap multi test...\n");
+
+  b = bitmap_create(MULTITESTSIZE);
+  KASSERT(b != NULL);
+
+  for (i=0; i<MULTITESTSIZE; i++) {
+    KASSERT(bitmap_isset(b, i) == 0);
+  }
+
+  /* Mark some consecutive bits of the bitmap */
+  bitmap_n_mark(b, 5, 0);
+  bitmap_n_mark(b, 5, 7);
+
+  for (i=0; i<5; i++) {
+    KASSERT(bitmap_isset(b, i));
+  }
+  for (i=7; i<7+5; i++) {
+    KASSERT(bitmap_isset(b, i));
+  }
+
+  /* Fill the gap */
+  bitmap_n_mark(b, 2, 5);
+
+  /* Try finding an unavailable sequence of cleared bits */
+  if (bitmap_n_alloc(b, 4, &i) == 0) {
+    /* won't enter */
+    (void)i;
+  }
+
+  /* Now try finding an available sequence of cleared bits */
+  if (bitmap_n_alloc(b, 3, &i) == 0) {
+    /* And set them */
+    bitmap_n_mark(b, 3, i);
+  }
+
+  for (int j=0; j<3; j++) {
+    KASSERT(bitmap_isset(b, j+i));
+  }
+
+  /* Unmark some bits */
+  bitmap_n_unmark(b, 12, 0);
+
+  for (i=0; i<12; i++) {
+    KASSERT(bitmap_isset(b, i) == 0);
+  }
+
+  kprintf("Closing bitmap multi test...\n");
+
+  return 0;
+}
+
+#endif /* OPT_DATA_STRUCT */

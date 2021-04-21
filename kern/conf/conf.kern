@@ -463,4 +463,3 @@ defoption vm_alloc
 optfile   vm_alloc  test/memstats.c
 
 defoption data_struct
-optfile   data_struct lib/linked_list.c

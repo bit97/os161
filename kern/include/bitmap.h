@@ -30,6 +30,8 @@
 #ifndef _BITMAP_H_
 #define _BITMAP_H_
 
+#include <opt-data_struct.h>
+
 /*
  * Fixed-size array of bits. (Intended for storage management.)
  *
@@ -38,12 +40,26 @@
  *                      Returns NULL on error.
  *     bitmap_getdata - return pointer to raw bit data (for I/O).
  *     bitmap_alloc   - locate a cleared bit, set it, and return its index.
+ *     bitmap_n_alloc - locate n consecutive cleared bits, set them, and return
+ *                      the starting index.
  *     bitmap_mark    - set a clear bit by its index.
+ *     bitmap_n_mark  - set n consecutive clear bits by their starting index.
  *     bitmap_unmark  - clear a set bit by its index.
+ *     bitmap_n_unmark- clear n consecutive set bits by their starting index.
  *     bitmap_isset   - return whether a particular bit is set or not.
  *     bitmap_destroy - destroy bitmap.
  */
 
+/*
+ * It would be a lot more efficient on most platforms to use uint32_t
+ * or unsigned long as the base type for holding bits. But we don't,
+ * because if one uses any data type more than a single byte wide,
+ * bitmap data saved on disk becomes endian-dependent, which is a
+ * severe nuisance.
+ */
+#define BITS_PER_WORD   (CHAR_BIT)
+#define WORD_TYPE       unsigned char
+#define WORD_ALLBITS    (0xff)
 
 struct bitmap;  /* Opaque. */
 
@@ -54,6 +70,10 @@ void           bitmap_mark(struct bitmap *, unsigned index);
 void           bitmap_unmark(struct bitmap *, unsigned index);
 int            bitmap_isset(struct bitmap *, unsigned index);
 void           bitmap_destroy(struct bitmap *);
-
+#if OPT_DATA_STRUCT
+int            bitmap_n_alloc(struct bitmap *, unsigned n, unsigned *index);
+void           bitmap_n_mark(struct bitmap *, unsigned n, unsigned index);
+void           bitmap_n_unmark(struct bitmap *, unsigned n, unsigned index);
+#endif /* OPT_DATA_STRUCT */
 
 #endif /* _BITMAP_H_ */

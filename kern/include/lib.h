@@ -39,6 +39,8 @@
 
 
 #include <cdefs.h>
+#include <types.h>
+#include <opt-data_struct.h>
 
 /*
  * Assert macros.
@@ -194,5 +196,14 @@ void kprintf_bootstrap(void);
 #define DIVROUNDUP(a,b) (((a)+(b)-1)/(b))
 #define ROUNDUP(a,b)    (DIVROUNDUP(a,b)*(b))
 
+/*
+ * Extra data structures
+ */
+#if OPT_DATA_STRUCT
+
+/*  Linked list   */
+// TODO
+
+#endif /* OPT_DATA_STRUCT */
 
 #endif /* _LIB_H_ */
