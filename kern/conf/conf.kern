@@ -463,3 +463,6 @@ defoption vm_alloc
 optfile   vm_alloc  test/memstats.c
 
 defoption data_struct
+
+defoption history
+optfile   history   lib/history.c

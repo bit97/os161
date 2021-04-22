@@ -52,7 +52,7 @@
 
 #define _PATH_SHELL "/bin/sh"
 
-#define MAXMENUARGS  16
+#define MAXMENUARGS   16
 
 ////////////////////////////////////////////////////////////
 //
@@ -835,7 +835,7 @@ menu(char *args)
 
 	while (1) {
 		kprintf("OS/161 kernel [? for menu]: ");
-		kgets(buf, sizeof(buf));
+    kgets(buf, sizeof(buf));
 		menu_execute(buf, 0);
 	}
 }

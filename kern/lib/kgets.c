@@ -30,19 +30,32 @@
 
 #include <types.h>
 #include <lib.h>
+#include <opt-history.h>
+
+#if OPT_HISTORY
+
+#include <history.h>
+
+static struct history *cmd_history = NULL;
+
+static void cmd_history_init(void)
+{
+  cmd_history = history_create(MAXHISTORY);
+  KASSERT(cmd_history != NULL);
+}
+
+#endif /* OPT_HISTORY */
 
 /*
  * Do a backspace in typed input.
  * We overwrite the current character with a space in case we're on
  * a terminal where backspace is nondestructive.
  */
-static
-void
-backsp(void)
+static void backsp(void)
 {
-	putch('\b');
-	putch(' ');
-	putch('\b');
+  putch('\b');
+  putch(' ');
+  putch('\b');
 }
 
 /*
@@ -50,64 +63,119 @@ backsp(void)
  * common control characters. Do not include the terminating newline
  * in the buffer passed back.
  */
-void
-kgets(char *buf, size_t maxlen)
+void kgets(char *buf, size_t maxlen)
 {
-	size_t pos = 0;
-	int ch;
+  size_t pos = 0;
+  int ch;
+#if OPT_HISTORY
+  bool maybe_arrow = false, found;
+  char ptr[64];
 
-	while (1) {
-		ch = getch();
-		if (ch=='\n' || ch=='\r') {
-			putch('\n');
-			break;
-		}
+  if (cmd_history == NULL)
+    cmd_history_init();
+#endif
 
-		/* Only allow the normal 7-bit ascii */
-		if (ch>=32 && ch<127 && pos < maxlen-1) {
-			putch(ch);
-			buf[pos++] = ch;
-		}
-		else if ((ch=='\b' || ch==127) && pos>0) {
-			/* backspace */
-			backsp();
-			pos--;
-		}
-		else if (ch==3) {
-			/* ^C - return empty string */
-			putch('^');
-			putch('C');
-			putch('\n');
-			pos = 0;
-			break;
-		}
-		else if (ch==18) {
-			/* ^R - reprint input */
-			buf[pos] = 0;
-			kprintf("^R\n%s", buf);
-		}
-		else if (ch==21) {
-			/* ^U - erase line */
-			while (pos > 0) {
-				backsp();
-				pos--;
-			}
-		}
-		else if (ch==23) {
-			/* ^W - erase word */
-			while (pos > 0 && buf[pos-1]==' ') {
-				backsp();
-				pos--;
-			}
-			while (pos > 0 && buf[pos-1]!=' ') {
-				backsp();
-				pos--;
-			}
-		}
-		else {
-			beep();
-		}
-	}
+  while (1) {
+    ch = getch();
+    if (ch == '\n' || ch == '\r') {
+      putch('\n');
+      break;
+    }
 
-	buf[pos] = 0;
+    /* Only allow the normal 7-bit ascii */
+    if (ch >= 32 && ch < 127 && pos < maxlen - 1) {
+#if OPT_HISTORY
+      if (maybe_arrow) {
+        found = false;
+        switch (ch) {
+          case 91:
+            break;
+          case 65:
+            /* Arrow UP */
+            found = history_up(cmd_history, ptr);
+            maybe_arrow = false;
+            break;
+          case 66:
+            /* Arrow DOWN */
+            found = history_down(cmd_history, ptr);
+            maybe_arrow = false;
+            break;
+          default:
+            maybe_arrow = false;
+            break;
+        }
+        if (found) {
+          found = false;
+          while (pos > 0) {
+            backsp();
+            pos--;
+          }
+          strcpy(buf, ptr);
+          while (buf[pos]) {
+            putch(buf[pos]);
+            pos++;
+          }
+        } else {
+          if (ch == 66) {
+            /* Moved down after the newest history command.. clear the output */
+            while (pos > 0) {
+              backsp();
+              pos--;
+            }
+          }
+        }
+      } else {
+        putch(ch);
+        buf[pos++] = ch;
+      }
+#else
+      putch(ch);
+      buf[pos++] = ch;
+#endif
+    } else if ((ch == '\b' || ch == 127) && pos > 0) {
+      /* backspace */
+      backsp();
+      pos--;
+    } else if (ch == 3) {
+      /* ^C - return empty string */
+      putch('^');
+      putch('C');
+      putch('\n');
+      pos = 0;
+      break;
+    } else if (ch == 18) {
+      /* ^R - reprint input */
+      buf[pos] = 0;
+      kprintf("^R\n%s", buf);
+    } else if (ch == 21) {
+      /* ^U - erase line */
+      while (pos > 0) {
+        backsp();
+        pos--;
+      }
+    } else if (ch == 23) {
+      /* ^W - erase word */
+      while (pos > 0 && buf[pos - 1] == ' ') {
+        backsp();
+        pos--;
+      }
+      while (pos > 0 && buf[pos - 1] != ' ') {
+        backsp();
+        pos--;
+      }
+    }
+#if OPT_HISTORY
+    else if (ch == 27) {
+      maybe_arrow = true;
+    }
+#endif
+    else {
+      beep();
+    }
+  }
+
+  buf[pos] = 0;
+#if OPT_HISTORY
+  history_write(cmd_history, buf);
+#endif
 }

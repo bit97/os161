@@ -37,3 +37,4 @@ options sys_io          # Adds support for READ and WRITE system calls
 options sys_proc        # Adds support for EXIT system call
 options vm_alloc        # Adds suport for improved VM management (based on DUMBVM)
 options data_struct     # Adds support for extra data structure (like linked list)
+options history         # Adds support for menu history
