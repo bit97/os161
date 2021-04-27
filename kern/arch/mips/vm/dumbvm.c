@@ -273,7 +273,8 @@ freeppages(paddr_t addr)
   /* Page align the physical address */
   addr &= PAGE_FRAME;
 
-  KASSERT(addr >= first_vm_paddr);
+  /* Freeing memory allocated before VM initialization */
+  if (addr < first_vm_paddr)  return;
 
   /* Retrieve index of first block */
   pos = (addr - first_vm_paddr)/PAGE_SIZE;
