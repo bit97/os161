@@ -1,4 +1,4 @@
-OS161_VERS=SYSCALLS
+OS161_VERS=SYNC
 
 function err {
   notify-send --urgency=critical --expire-time=1000 $1

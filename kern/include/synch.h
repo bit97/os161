@@ -34,7 +34,8 @@
  * Header file for synchronization primitives.
  */
 
-
+#include <opt-lock_sem.h>
+#include <opt-lock.h>
 #include <spinlock.h>
 
 /*
@@ -72,11 +73,25 @@ void V(struct semaphore *);
  * The name field is for easier debugging. A copy of the name is
  * (should be) made internally.
  */
+
+/*
+ * Two implementation of the lock:
+ *    - lock_sem    makes use of binary semaphores
+ *    - lock        makes use of wait channels and spinlocks
+ *  in the config file. Notice that the two are mutual exclusive (also, none of
+ *  them can be passed) and the lock version has higher priority
+ */
 struct lock {
         char *lk_name;
         HANGMAN_LOCKABLE(lk_hangman);   /* Deadlock detector hook. */
         // add what you need here
         // (don't forget to mark things volatile as needed)
+#if OPT_LOCK
+
+#elif OPT_LOCK_SEM
+        struct semaphore  *lk_sem;
+        struct thread     *lk_holder;
+#endif
 };
 
 struct lock *lock_create(const char *name);

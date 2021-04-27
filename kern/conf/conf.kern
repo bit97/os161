@@ -466,3 +466,6 @@ defoption data_struct
 
 defoption history
 optfile   history   lib/history.c
+
+defoption lock_sem
+defoption lock

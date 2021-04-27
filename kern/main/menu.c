@@ -570,7 +570,7 @@ static const char *testmenu[] = {
 	"[net] Network test                  ",
 #endif
 	"[sy1] Semaphore test                ",
-	"[sy2] Lock test             (1)     ",
+	"[sy2] Lock test                     ",
 	"[sy3] CV test               (1)     ",
 	"[sy4] CV test #2            (1)     ",
 	"[semu1-22] Semaphore unit tests     ",

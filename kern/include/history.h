@@ -10,7 +10,7 @@
  *      history_destroy   - release acquired resources
  */
 
-#define MAXHISTORY    3
+#define MAXHISTORY    64
 
 struct history;  /* Opaque. */
 
