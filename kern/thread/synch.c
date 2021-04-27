@@ -152,12 +152,16 @@ struct lock *lock_create(const char *name)
   HANGMAN_LOCKABLEINIT(&lock->lk_hangman, lock->lk_name);
 
 #if OPT_LOCK
+  lock->lk_wchan = wchan_create(lock->lk_name);
+  spinlock_init(&lock->lk_splk);
+  lock->lk_holder = NULL;
 
+  KASSERT(lock->lk_wchan != NULL);
 #elif OPT_LOCK_SEM
   lock->lk_sem = sem_create(name, 1);
-  KASSERT(lock->lk_sem != NULL);
-
   lock->lk_holder = NULL;
+
+  KASSERT(lock->lk_sem != NULL);
 #endif
 
   return lock;
@@ -168,7 +172,8 @@ void lock_destroy(struct lock *lock)
   KASSERT(lock != NULL);
 
 #if OPT_LOCK
-
+  spinlock_cleanup(&lock->lk_splk);
+  wchan_destroy(lock->lk_wchan);
 #elif OPT_LOCK_SEM
   KASSERT(lock->lk_holder != NULL);
   sem_destroy(lock->lk_sem);
@@ -184,7 +189,14 @@ void lock_acquire(struct lock *lock)
   HANGMAN_WAIT(&curthread->t_hangman, &lock->lk_hangman);
 
 #if OPT_LOCK
+  spinlock_acquire(&lock->lk_splk);
 
+  while (lock->lk_holder != NULL) {
+    wchan_sleep(lock->lk_wchan, &lock->lk_splk);
+  }
+  lock->lk_holder = curthread;
+
+  spinlock_release(&lock->lk_splk);
 #elif OPT_LOCK_SEM
   P(lock->lk_sem);
   lock->lk_holder = curthread;
@@ -200,7 +212,13 @@ void lock_release(struct lock *lock)
   HANGMAN_RELEASE(&curthread->t_hangman, &lock->lk_hangman);
 
 #if OPT_LOCK
+  spinlock_acquire(&lock->lk_splk);
 
+  KASSERT(lock_do_i_hold(lock));
+  lock->lk_holder = NULL;
+  wchan_wakeone(lock->lk_wchan, &lock->lk_splk);
+
+  spinlock_release(&lock->lk_splk);
 #elif OPT_LOCK_SEM
   KASSERT(lock_do_i_hold(lock));
 
@@ -211,8 +229,7 @@ void lock_release(struct lock *lock)
 
 bool lock_do_i_hold(struct lock *lock)
 {
-#if OPT_LOCK
-#elif OPT_LOCK_SEM
+#if (OPT_LOCK || OPT_LOCK_SEM)
   /*
    * We're protected by the semaphore, no need to extra protect this section
    */

@@ -45,13 +45,14 @@
  * internally.
  */
 struct semaphore {
-        char *sem_name;
-	struct wchan *sem_wchan;
-	struct spinlock sem_lock;
-        volatile unsigned sem_count;
+  char *sem_name;
+  struct wchan *sem_wchan;
+  struct spinlock sem_lock;
+  volatile unsigned sem_count;
 };
 
 struct semaphore *sem_create(const char *name, unsigned initial_count);
+
 void sem_destroy(struct semaphore *);
 
 /*
@@ -61,6 +62,7 @@ void sem_destroy(struct semaphore *);
  *     V (verhogen): increment count.
  */
 void P(struct semaphore *);
+
 void V(struct semaphore *);
 
 
@@ -82,19 +84,20 @@ void V(struct semaphore *);
  *  them can be passed) and the lock version has higher priority
  */
 struct lock {
-        char *lk_name;
-        HANGMAN_LOCKABLE(lk_hangman);   /* Deadlock detector hook. */
-        // add what you need here
-        // (don't forget to mark things volatile as needed)
+  char *lk_name;
+  HANGMAN_LOCKABLE(lk_hangman);   /* Deadlock detector hook. */
 #if OPT_LOCK
-
+  struct wchan      *lk_wchan;
+  struct spinlock   lk_splk;
+  struct thread     *lk_holder;
 #elif OPT_LOCK_SEM
-        struct semaphore  *lk_sem;
-        struct thread     *lk_holder;
+  struct semaphore  *lk_sem;
+  struct thread     *lk_holder;
 #endif
 };
 
 struct lock *lock_create(const char *name);
+
 void lock_destroy(struct lock *);
 
 /*
@@ -109,7 +112,9 @@ void lock_destroy(struct lock *);
  * These operations must be atomic. You get to write them.
  */
 void lock_acquire(struct lock *);
+
 void lock_release(struct lock *);
+
 bool lock_do_i_hold(struct lock *);
 
 
@@ -128,12 +133,13 @@ bool lock_do_i_hold(struct lock *);
  */
 
 struct cv {
-        char *cv_name;
-        // add what you need here
-        // (don't forget to mark things volatile as needed)
+  char *cv_name;
+  // add what you need here
+  // (don't forget to mark things volatile as needed)
 };
 
 struct cv *cv_create(const char *name);
+
 void cv_destroy(struct cv *);
 
 /*
@@ -150,7 +156,9 @@ void cv_destroy(struct cv *);
  * These operations must be atomic. You get to write them.
  */
 void cv_wait(struct cv *cv, struct lock *lock);
+
 void cv_signal(struct cv *cv, struct lock *lock);
+
 void cv_broadcast(struct cv *cv, struct lock *lock);
 
 

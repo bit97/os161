@@ -39,4 +39,6 @@ options vm_alloc        # Adds suport for improved VM management (based on DUMBV
 options data_struct     # Adds support for extra data structure (like linked list)
 options history         # Adds support for menu history
 
-options lock_sem        # Lock basic version, with binary semaphores
+options lock_sem        # Lock basic version, with binary semaphore
+options lock            # Lock improved version, with wchan and spinlock (it
+                        # overrides the lock_sem)
