@@ -231,7 +231,8 @@ bool lock_do_i_hold(struct lock *lock)
 {
 #if (OPT_LOCK || OPT_LOCK_SEM)
   /*
-   * We're protected by the semaphore, no need to extra protect this section
+   * We're protected by the semaphore/spinlock, no need to extra protect this
+   * section
    */
   return lock->lk_holder == curthread;
 #else
@@ -259,7 +260,13 @@ struct cv *cv_create(const char *name)
     return NULL;
   }
 
-  // add stuff here as needed
+#if OPT_CV
+  cv->cv_wchan = wchan_create(cv->cv_name);
+  spinlock_init(&cv->cv_splk);
+
+  KASSERT(cv->cv_wchan != NULL);
+  KASSERT(&cv->cv_splk != NULL);
+#endif
 
   return cv;
 }
@@ -268,7 +275,10 @@ void cv_destroy(struct cv *cv)
 {
   KASSERT(cv != NULL);
 
-  // add stuff here as needed
+#if OPT_CV
+  wchan_destroy(cv->cv_wchan);
+  spinlock_cleanup(&cv->cv_splk);
+#endif
 
   kfree(cv->cv_name);
   kfree(cv);
@@ -276,21 +286,54 @@ void cv_destroy(struct cv *cv)
 
 void cv_wait(struct cv *cv, struct lock *lock)
 {
+#if OPT_CV
+  KASSERT(cv != NULL);
+
+  spinlock_acquire(&cv->cv_splk);
+  KASSERT(lock_do_i_hold(lock));
+  lock_release(lock);
+  wchan_sleep(cv->cv_wchan, &cv->cv_splk);
+  spinlock_release(&cv->cv_splk);
+  lock_acquire(lock);
+#else
   // Write this
   (void) cv;    // suppress warning until code gets written
   (void) lock;  // suppress warning until code gets written
+#endif
 }
 
 void cv_signal(struct cv *cv, struct lock *lock)
 {
+#if OPT_CV
+  KASSERT(cv != NULL);
+
+  spinlock_acquire(&cv->cv_splk);
+  KASSERT(lock_do_i_hold(lock));
+  lock_release(lock);
+  wchan_wakeone(cv->cv_wchan, &cv->cv_splk);
+  spinlock_release(&cv->cv_splk);
+  lock_acquire(lock);
+#else
   // Write this
   (void) cv;    // suppress warning until code gets written
   (void) lock;  // suppress warning until code gets written
+#endif
 }
 
 void cv_broadcast(struct cv *cv, struct lock *lock)
 {
+#if OPT_CV
+  KASSERT(cv != NULL);
+
+  spinlock_acquire(&cv->cv_splk);
+  KASSERT(lock_do_i_hold(lock));
+  lock_release(lock);
+  wchan_wakeall(cv->cv_wchan, &cv->cv_splk);
+  spinlock_release(&cv->cv_splk);
+  lock_acquire(lock);
+#else
   // Write this
   (void) cv;    // suppress warning until code gets written
   (void) lock;  // suppress warning until code gets written
+#endif
 }

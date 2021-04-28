@@ -36,6 +36,7 @@
 
 #include <opt-lock_sem.h>
 #include <opt-lock.h>
+#include <opt-cv.h>
 #include <spinlock.h>
 
 /*
@@ -134,8 +135,10 @@ bool lock_do_i_hold(struct lock *);
 
 struct cv {
   char *cv_name;
-  // add what you need here
-  // (don't forget to mark things volatile as needed)
+#if OPT_CV
+  struct wchan    *cv_wchan;
+  struct spinlock  cv_splk;
+#endif
 };
 
 struct cv *cv_create(const char *name);

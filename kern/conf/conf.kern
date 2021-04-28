@@ -469,3 +469,4 @@ optfile   history   lib/history.c
 
 defoption lock_sem
 defoption lock
+defoption cv
