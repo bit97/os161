@@ -309,10 +309,8 @@ void cv_signal(struct cv *cv, struct lock *lock)
 
   spinlock_acquire(&cv->cv_splk);
   KASSERT(lock_do_i_hold(lock));
-  lock_release(lock);
   wchan_wakeone(cv->cv_wchan, &cv->cv_splk);
   spinlock_release(&cv->cv_splk);
-  lock_acquire(lock);
 #else
   // Write this
   (void) cv;    // suppress warning until code gets written
@@ -327,10 +325,8 @@ void cv_broadcast(struct cv *cv, struct lock *lock)
 
   spinlock_acquire(&cv->cv_splk);
   KASSERT(lock_do_i_hold(lock));
-  lock_release(lock);
   wchan_wakeall(cv->cv_wchan, &cv->cv_splk);
   spinlock_release(&cv->cv_splk);
-  lock_acquire(lock);
 #else
   // Write this
   (void) cv;    // suppress warning until code gets written
