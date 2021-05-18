@@ -92,7 +92,8 @@ cmd_progthread(void *ptr, unsigned long nargs)
 	if (result) {
 		kprintf("Running program %s failed: %s\n", args[0],
 			strerror(result));
-		return;
+    sys__exit(-1);
+    return;
 	}
 
 	/* NOTREACHED: runprogram only returns on error. */
@@ -132,11 +133,6 @@ common_prog(int nargs, char **args)
 		proc_destroy(proc);
 		return result;
 	}
-
-	/*
-	 * The new process will be destroyed when the program exits...
-	 * once you write the code for handling that.
-	 */
 
 	/*
 	 * Wait for process termination

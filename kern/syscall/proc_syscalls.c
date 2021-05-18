@@ -58,7 +58,7 @@ sys_waitpid(pid_t pid, int *stat_loc, int options)
   /*
    * Return error if there's no such process or if trying to wait for itself
    */
-  if (!proc || proc->p_pid == pid) {
+  if (!proc || curproc->p_pid == pid) {
     if (stat_loc) *stat_loc = __WEXITED;
     return -1;
   }
@@ -81,3 +81,13 @@ sys_getpid(void)
   return proc->p_pid;
 }
 #endif /* OPT_WAIT */
+
+#if OPT_FORK
+
+pid_t
+sys_fork(void)
+{
+  return (pid_t)0;
+}
+
+#endif /* OPT_FORK */
