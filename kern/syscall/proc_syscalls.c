@@ -16,5 +16,6 @@ sys__exit(int code)
   struct proc* proc = curthread->t_proc;
   proc->p_exitcode = code;
   if (proc->p_addrspace) proc_destroy_as(proc);
+  proc_signal(proc);
   thread_exit();
 }

@@ -36,7 +36,13 @@
  * Note: curproc is defined by <current.h>.
  */
 
+#include <opt-wait.h>
 #include <spinlock.h>
+#if OPT_WAIT
+#include <synch.h>
+
+#define WAIT_WITH_SEMAPHORE 0
+#endif /* OPT_WAIT */
 
 struct addrspace;
 struct thread;
@@ -72,6 +78,16 @@ struct proc {
 
 	/* add more material here as needed */
 	int p_exitcode;
+
+#if OPT_WAIT
+#if WAIT_WITH_SEMAPHORE
+  struct semaphore *p_waitsem;
+#else
+  struct cv *p_waitcv;
+  struct lock *p_waitlk;
+  bool p_ended;
+#endif /* WAIT_WITH_SEMAPHORE */
+#endif /* OPT_WAIT */
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */
@@ -100,5 +116,10 @@ struct addrspace *proc_getas(void);
 
 /* Change the address space of the current process, and return the old one. */
 struct addrspace *proc_setas(struct addrspace *);
+
+#if OPT_WAIT
+int proc_wait(struct proc *);
+void proc_signal(struct proc *);
+#endif /* OPT_WAIT */
 
 #endif /* _PROC_H_ */

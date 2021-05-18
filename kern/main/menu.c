@@ -138,6 +138,12 @@ common_prog(int nargs, char **args)
 	 * once you write the code for handling that.
 	 */
 
+	/*
+	 * Wait for process termination
+	 */
+	result = proc_wait(proc);
+	kprintf("Process ended with status %d\n", result);
+
 	return 0;
 }
 

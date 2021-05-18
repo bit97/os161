@@ -82,6 +82,17 @@ proc_create(const char *name)
 	/* VFS fields */
 	proc->p_cwd = NULL;
 
+#if OPT_WAIT
+#if WAIT_WITH_SEMAPHORE
+  proc->p_waitsem = sem_create(name, 0);
+  // Todo destroy semaphore
+#else
+  proc->p_waitcv = cv_create(name);
+  proc->p_waitlk = lock_create(name);
+  proc->p_ended = false;
+#endif /* WAIT_WITH_SEMAPHORE */
+#endif /* OPT_WAIT */
+
 	return proc;
 }
 
@@ -324,3 +335,38 @@ proc_setas(struct addrspace *newas)
 	spinlock_release(&proc->p_lock);
 	return oldas;
 }
+
+#if OPT_WAIT
+
+int
+proc_wait(struct proc *proc)
+{
+  kprintf("proc_wait(%s)\n", proc->p_name);
+#if WAIT_WITH_SEMAPHORE
+  P(proc->p_waitsem);
+#else
+  lock_acquire(proc->p_waitlk);
+  while (!proc->p_ended) {
+    cv_wait(proc->p_waitcv, proc->p_waitlk);
+  }
+  lock_release(proc->p_waitlk);
+#endif /* WAIT_WITH_SEMAPHORE */
+  return proc->p_exitcode;
+}
+
+void
+proc_signal(struct proc *proc)
+{
+#if WAIT_WITH_SEMAPHORE
+  V(proc->p_waitsem);
+#else
+  lock_acquire(proc->p_waitlk);
+  proc->p_ended = true;
+  cv_broadcast(proc->p_waitcv, proc->p_waitlk);
+  lock_release(proc->p_waitlk);
+#endif /* WAIT_WITH_SEMAPHORE */
+  kprintf("proc_signal(%s)\n", proc->p_name);
+}
+
+#endif /* OPT_WAIT */
+
