@@ -41,7 +41,6 @@
 #if OPT_WAIT
 #include <synch.h>
 
-#define WAIT_WITH_SEMAPHORE 0
 #endif /* OPT_WAIT */
 
 struct addrspace;
@@ -80,13 +79,9 @@ struct proc {
 	int p_exitcode;
 
 #if OPT_WAIT
-#if WAIT_WITH_SEMAPHORE
-  struct semaphore *p_waitsem;
-#else
   struct cv *p_waitcv;
   struct lock *p_waitlk;
   bool p_ended;
-#endif /* WAIT_WITH_SEMAPHORE */
 #endif /* OPT_WAIT */
 };
 
