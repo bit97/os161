@@ -49,10 +49,56 @@
 #include <addrspace.h>
 #include <vnode.h>
 
+#if OPT_WAIT
+#include <limits.h>
+
+#define PROC_MAX 100
+#define PID_TO_TABLE_IDX(pid) ((pid) - PID_MIN)
+#define TABLE_IDX_TO_PID(idx) ((idx) + PID_MIN)
+
+static struct proc* pid_table[PROC_MAX] = { NULL };
+#endif /* OPT_WAIT */
+
 /*
  * The process for the kernel; this holds all the kernel-only threads.
  */
 struct proc *kproc;
+
+
+#if OPT_WAIT
+static
+pid_t
+pid_table_get(struct proc* proc)
+{
+  int i;
+
+  /*
+   * Init process, do not store it inside the pid table
+   */
+  if (kproc == NULL)
+    return 1;
+
+  for (i = 0; i < PROC_MAX; i++) {
+    if (pid_table[i] == NULL) {
+      pid_table[i] = proc;
+      return TABLE_IDX_TO_PID(i);
+    }
+  }
+
+  panic("No more pid available..\n");
+}
+
+static
+void
+pid_table_remove(struct proc* proc)
+{
+  KASSERT(proc->p_pid > 0);
+  KASSERT(proc->p_pid < TABLE_IDX_TO_PID(PROC_MAX));
+
+  pid_table[PID_TO_TABLE_IDX(proc->p_pid)] = NULL;
+}
+
+#endif /* OPT_WAIT */
 
 /*
  * Create a proc structure.
@@ -86,6 +132,8 @@ proc_create(const char *name)
   proc->p_waitcv = cv_create(name);
   proc->p_waitlk = lock_create(name);
   proc->p_ended = false;
+
+  proc->p_pid = pid_table_get(proc);
 #endif /* OPT_WAIT */
 
 	return proc;
@@ -183,6 +231,8 @@ proc_destroy(struct proc *proc)
 #if OPT_WAIT
   cv_destroy(proc->p_waitcv);
   lock_destroy(proc->p_waitlk);
+
+  pid_table_remove(proc);
 #endif /* OPT_WAIT */
 
 	kfree(proc->p_name);
@@ -365,6 +415,15 @@ proc_signal(struct proc *proc)
   proc->p_ended = true;
   cv_broadcast(proc->p_waitcv, proc->p_waitlk);
   lock_release(proc->p_waitlk);
+}
+
+struct proc *
+proc_from_pid(pid_t pid)
+{
+  if (PID_TO_TABLE_IDX(pid) < 0 || PID_TO_TABLE_IDX(pid) >= PROC_MAX)
+    return NULL;
+
+  return pid_table[PID_TO_TABLE_IDX(pid)];
 }
 
 #endif /* OPT_WAIT */

@@ -4,6 +4,7 @@
 #include <proc.h>
 #include <current.h>
 #include <addrspace.h>
+#include <kern/wait.h>
 
 /**
  * Minimal support for Exit system call. Clean the thread and the process
@@ -39,3 +40,44 @@ sys__exit(int code)
    */
   thread_exit();
 }
+
+#if OPT_WAIT
+pid_t
+sys_waitpid(pid_t pid, int *stat_loc, int options)
+{
+  struct proc *proc;
+  int status;
+
+  (void)options;
+
+  /*
+   * Retrieve process associated to given pid, if any
+   */
+  proc = proc_from_pid(pid);
+
+  /*
+   * Return error if there's no such process or if trying to wait for itself
+   */
+  if (!proc || proc->p_pid == pid) {
+    if (stat_loc) *stat_loc = __WEXITED;
+    return -1;
+  }
+
+  status = proc_wait(proc);
+  status |= __WEXITED;
+
+  if (stat_loc) *stat_loc = status;
+
+  return pid;
+}
+
+pid_t
+sys_getpid(void)
+{
+  struct proc *proc = curproc;
+
+  KASSERT(proc != NULL);
+
+  return proc->p_pid;
+}
+#endif /* OPT_WAIT */

@@ -82,6 +82,8 @@ struct proc {
   struct cv *p_waitcv;
   struct lock *p_waitlk;
   bool p_ended;
+
+  pid_t p_pid;
 #endif /* OPT_WAIT */
 };
 
@@ -115,6 +117,7 @@ struct addrspace *proc_setas(struct addrspace *);
 #if OPT_WAIT
 int proc_wait(struct proc *);
 void proc_signal(struct proc *);
+struct proc* proc_from_pid(pid_t pid);
 #endif /* OPT_WAIT */
 
 #endif /* _PROC_H_ */

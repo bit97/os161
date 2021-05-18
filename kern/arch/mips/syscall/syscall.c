@@ -128,6 +128,18 @@ syscall(struct trapframe *tf)
     break;
 #endif /* OPT_SYS_PROC */
 
+#if OPT_WAIT
+	    case SYS_waitpid:
+    retval = sys_waitpid((pid_t) tf->tf_a0, (int*) tf->tf_a1, (int) tf->tf_a2);
+    err = retval ? ECHILD : 0;
+    break;
+
+	    case SYS_getpid:
+    retval = sys_getpid();
+    err = 0;
+    break;
+#endif /* OPT_WAIT */
+
 
 	    /* Add stuff here */
 

@@ -32,6 +32,7 @@
 
 #include <opt-sys_io.h>
 #include <opt-sys_proc.h>
+#include <opt-wait.h>
 #include <types.h>
 #include <cdefs.h> /* for __DEAD */
 struct trapframe; /* from <machine/trapframe.h> */
@@ -61,12 +62,19 @@ __DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env,
 
 int sys_reboot(int code);
 int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
+
 #if OPT_SYS_IO
 ssize_t sys_write(int fd, userptr_t buf, size_t nbyte);
 ssize_t sys_read(int fd, userptr_t buf, size_t nbyte);
 #endif /* OPT_SYS_IO */
+
 #if OPT_SYS_PROC
 void sys__exit(int code);
 #endif /* OPT_SYS_PROC */
+
+#if OPT_WAIT
+pid_t sys_waitpid(pid_t pid, int *stat_loc, int options);
+pid_t sys_getpid(void);
+#endif /* OPT_WAIT */
 
 #endif /* _SYSCALL_H_ */

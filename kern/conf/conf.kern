@@ -472,3 +472,4 @@ defoption lock
 defoption cv
 
 defoption wait
+optfile   wait  syscall/proc_syscalls.c
