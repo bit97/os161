@@ -104,7 +104,7 @@ sys_fork(struct trapframe *tf)
   result = as_copy(parent->p_addrspace, &child->p_addrspace);
   if (result) {
     proc_destroy(child);
-    return ENOMEM;
+    panic("Fatal error: unable to duplicate address space\n");
   }
 
 	/*
