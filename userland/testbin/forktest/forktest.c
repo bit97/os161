@@ -103,6 +103,8 @@ dowait(int nowait, int pid)
 {
 	int x;
 
+	printf("dowait (pid: %d)\n", pid);
+
 	if (pid<0) {
 		/* fork in question failed; just return */
 		return;

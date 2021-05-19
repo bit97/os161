@@ -44,6 +44,8 @@
 #include <vfs.h>
 #include <syscall.h>
 #include <test.h>
+#include <cpu.h>
+#include "../arch/mips/include/trapframe.h"
 
 /*
  * Load program "progname" and start running it in usermode.
@@ -107,3 +109,56 @@ runprogram(char *progname)
 	return EINVAL;
 }
 
+#if OPT_FORK
+
+void
+dupprogram(void *fork_ptr, unsigned long unused)
+{
+  struct fork *fork = (struct fork*)fork_ptr;
+  struct trapframe *tf_parent, tf;
+  struct semaphore *fork_sem;
+  struct proc *child = curproc, *parent = child->parent;
+  int result;
+  vaddr_t stackptr;
+
+  (void)unused;
+  (void)stackptr;
+
+  tf_parent = fork->fork_tf;
+  fork_sem = fork->fork_sem;
+
+  KASSERT(parent != NULL);
+  KASSERT(tf_parent != NULL);
+  KASSERT(fork_sem != NULL);
+
+  result = as_copy(parent->p_addrspace, &child->p_addrspace);
+  if (result) {
+    return;
+  }
+
+  /* Switch to it and activate it. */
+  proc_setas(child->p_addrspace);
+  as_activate();
+
+  /*
+   * Copy the parent's trapframe in child's current stack
+   */
+  memcpy(&tf, tf_parent, sizeof(tf));
+
+  /*
+   * Signal the trapframe duplication to parent process
+   */
+  V(fork_sem);
+
+  tf.tf_v0 = 0;       /* in child fork() returns 0  */
+  tf.tf_a3 = 0;       /* signal no error            */
+  /*
+   * Now, advance the program counter, to avoid restarting
+   * the syscall over and over again.
+   */
+  tf.tf_epc += 4;
+
+  enter_forked_process(&tf);
+}
+
+#endif /* OPT_FORK */

@@ -46,3 +46,4 @@ options cv              # Adds support for condition variables. Must enable one
                         # of the lock options
 
 options wait            # Adds support for waitpid syscall
+options fork            # Adds support for fork syscall

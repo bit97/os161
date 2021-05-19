@@ -33,6 +33,7 @@
 #include <opt-sys_io.h>
 #include <opt-sys_proc.h>
 #include <opt-wait.h>
+#include <opt-fork.h>
 #include <types.h>
 #include <cdefs.h> /* for __DEAD */
 struct trapframe; /* from <machine/trapframe.h> */
@@ -76,5 +77,9 @@ void sys__exit(int code);
 pid_t sys_waitpid(pid_t pid, int *stat_loc, int options);
 pid_t sys_getpid(void);
 #endif /* OPT_WAIT */
+
+#if OPT_FORK
+pid_t sys_fork(struct trapframe *tf);
+#endif /* OPT_FORK */
 
 #endif /* _SYSCALL_H_ */

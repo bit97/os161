@@ -37,6 +37,7 @@
  */
 
 #include <opt-wait.h>
+#include <opt-fork.h>
 #include <spinlock.h>
 #if OPT_WAIT
 #include <synch.h>
@@ -85,7 +86,20 @@ struct proc {
 
   pid_t p_pid;
 #endif /* OPT_WAIT */
+
+#if OPT_FORK
+  struct proc *parent;
+  /* Owned by forked child, so that a parent can do multiple forks */
+  struct semaphore *p_forksem;
+#endif /* OPT_FORK */
 };
+
+#if OPT_FORK
+struct fork {
+  struct trapframe *fork_tf;
+  struct semaphore *fork_sem;
+};
+#endif /* OPT_FORK */
 
 /* This is the process structure for the kernel and for kernel-only threads. */
 extern struct proc *kproc;
@@ -119,5 +133,10 @@ int proc_wait(struct proc *);
 void proc_signal(struct proc *);
 struct proc* proc_from_pid(pid_t pid);
 #endif /* OPT_WAIT */
+
+#if OPT_FORK
+/* Routine for duplicating a user-level program. */
+void dupprogram(void *fork_ptr, unsigned long unused);
+#endif /* OPT_FORK */
 
 #endif /* _PROC_H_ */

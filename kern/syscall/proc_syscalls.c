@@ -5,6 +5,8 @@
 #include <current.h>
 #include <addrspace.h>
 #include <kern/wait.h>
+#include <opt-fork.h>
+#include <kern/errno.h>
 
 /**
  * Minimal support for Exit system call. Clean the thread and the process
@@ -85,9 +87,43 @@ sys_getpid(void)
 #if OPT_FORK
 
 pid_t
-sys_fork(void)
+sys_fork(struct trapframe *tf)
 {
-  return (pid_t)0;
+  struct proc *parent, *child;
+  struct fork fork;
+  int result;
+
+	parent = curproc;
+
+	/* Create a process for the new program to run in. */
+	child = proc_create_runprogram(parent->p_name /* name */);
+	if (child == NULL) {
+		return ENOMEM;
+	}
+
+	child->parent = parent;
+  fork.fork_sem = sem_create("fork_sem", 0);
+  fork.fork_tf = tf;
+
+  result = thread_fork(child->p_name /* thread name */,
+                       child /* new process */,
+                       dupprogram /* thread function */,
+                       &fork /* thread arg */, 0 /* thread arg */);
+  if (result) {
+    kprintf("thread_fork failed: %s\n", strerror(result));
+    proc_destroy(child);
+    return result;
+  }
+
+  /*
+   * Wait for child to duplicate the trapframe
+   */
+  P(fork.fork_sem);
+
+  /*
+   * In parent, return child's pid
+   */
+  return child->p_pid;
 }
 
 #endif /* OPT_FORK */

@@ -9,12 +9,13 @@ main(int argc, char *argv[])
 
   (void)argc;
   (void)argv;
+  (void)status;
 
 	printf("In the parent BEFORE fork()\n");
 
 	pid = fork();
 
-  printf("fork() returned %d\n", pid);
+  printf("fork() returned %d, should print twice\n", pid);
 
 	switch(pid) {
 	  case -1:
@@ -29,6 +30,5 @@ main(int argc, char *argv[])
       printf("In parent AFTER fork(), child has exited with status = %d\n", status);
       break;
 	}
-
-	return 0;
+	return pid;
 }

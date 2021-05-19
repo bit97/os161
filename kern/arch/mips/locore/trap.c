@@ -39,6 +39,7 @@
 #include <vm.h>
 #include <mainbus.h>
 #include <syscall.h>
+#include <opt-fork.h>
 
 
 /* in exception-*.S */
@@ -436,3 +437,19 @@ enter_new_process(int argc, userptr_t argv, userptr_t env,
 
 	mips_usermode(&tf);
 }
+
+#if OPT_FORK
+/*
+ * Enter user mode for a newly forked process.
+ *
+ * This function is provided as a reminder. You need to write
+ * both it and the code that calls it.
+ *
+ * Thus, you can trash it and do things another way if you prefer.
+ */
+void
+enter_forked_process(struct trapframe *tf)
+{
+  mips_usermode(tf);
+}
+#endif /* OPT_FORK */
