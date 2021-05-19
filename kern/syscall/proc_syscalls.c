@@ -7,6 +7,7 @@
 #include <kern/wait.h>
 #include <opt-fork.h>
 #include <kern/errno.h>
+#include <mips/trapframe.h>
 
 /**
  * Minimal support for Exit system call. Clean the thread and the process
@@ -90,7 +91,7 @@ pid_t
 sys_fork(struct trapframe *tf)
 {
   struct proc *parent, *child;
-  struct fork fork;
+  struct trapframe *tf_child;
   int result;
 
 	parent = curproc;
@@ -100,25 +101,26 @@ sys_fork(struct trapframe *tf)
 	if (child == NULL) {
 		return ENOMEM;
 	}
+  result = as_copy(parent->p_addrspace, &child->p_addrspace);
+  if (result) {
+    proc_destroy(child);
+    return ENOMEM;
+  }
 
-	child->parent = parent;
-  fork.fork_sem = sem_create("fork_sem", 0);
-  fork.fork_tf = tf;
+	/*
+	 * Create a copy of the parent's trapframe on the heap memory
+	 */
+	tf_child = (struct trapframe*) kmalloc(sizeof(struct trapframe));
+  memcpy(tf_child, tf, sizeof(struct trapframe));
 
-  result = thread_fork(child->p_name /* thread name */,
-                       child /* new process */,
-                       dupprogram /* thread function */,
-                       &fork /* thread arg */, 0 /* thread arg */);
+  result = thread_fork(child->p_name /* thread name */, child /* new process */,
+                       cloneprogram /* thread function */,
+                       (void *) tf_child /* thread arg */, 0 /* thread arg */);
   if (result) {
     kprintf("thread_fork failed: %s\n", strerror(result));
     proc_destroy(child);
     return result;
   }
-
-  /*
-   * Wait for child to duplicate the trapframe
-   */
-  P(fork.fork_sem);
 
   /*
    * In parent, return child's pid

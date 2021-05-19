@@ -86,20 +86,7 @@ struct proc {
 
   pid_t p_pid;
 #endif /* OPT_WAIT */
-
-#if OPT_FORK
-  struct proc *parent;
-  /* Owned by forked child, so that a parent can do multiple forks */
-  struct semaphore *p_forksem;
-#endif /* OPT_FORK */
 };
-
-#if OPT_FORK
-struct fork {
-  struct trapframe *fork_tf;
-  struct semaphore *fork_sem;
-};
-#endif /* OPT_FORK */
 
 /* This is the process structure for the kernel and for kernel-only threads. */
 extern struct proc *kproc;
@@ -136,7 +123,7 @@ struct proc* proc_from_pid(pid_t pid);
 
 #if OPT_FORK
 /* Routine for duplicating a user-level program. */
-void dupprogram(void *fork_ptr, unsigned long unused);
+void cloneprogram(void *tf_ptr, unsigned long unused);
 #endif /* OPT_FORK */
 
 #endif /* _PROC_H_ */

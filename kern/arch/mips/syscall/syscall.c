@@ -36,6 +36,7 @@
 #include <current.h>
 #include <syscall.h>
 #include <opt-fork.h>
+#include <opt-wait.h>
 
 
 /*
@@ -132,7 +133,7 @@ syscall(struct trapframe *tf)
 #if OPT_WAIT
 	    case SYS_waitpid:
     retval = sys_waitpid((pid_t) tf->tf_a0, (int*) tf->tf_a1, (int) tf->tf_a2);
-    err = retval ? ECHILD : 0;
+    err = retval < 0 ? ECHILD : 0;
     break;
 
 	    case SYS_getpid:

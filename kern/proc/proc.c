@@ -136,11 +136,6 @@ proc_create(const char *name)
   proc->p_pid = pid_table_get(proc);
 #endif /* OPT_WAIT */
 
-#if OPT_FORK
-  proc->parent = NULL;
-  proc->p_forksem = sem_create("fork_sem", 0);
-#endif /* OPT_FORK */
-
 	return proc;
 }
 
@@ -239,11 +234,6 @@ proc_destroy(struct proc *proc)
 
   pid_table_remove(proc);
 #endif /* OPT_WAIT */
-
-#if OPT_FORK
-  proc->parent = NULL;
-  sem_destroy(proc->p_forksem);
-#endif /* OPT_FORK */
 
 	kfree(proc->p_name);
 	kfree(proc);
