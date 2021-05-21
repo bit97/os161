@@ -136,13 +136,12 @@ boot(void)
 	kprintf_bootstrap();
 	thread_start_cpus();
 
-#if OPT_HISTORY
-	history_bootstrap();
-#endif /* OPT_HISTORY */
-
-
 	/* Default bootfs - but ignore failure, in case emu0 doesn't exist */
 	vfs_setbootfs("emu0");
+
+#if OPT_HISTORY
+  history_bootstrap();
+#endif /* OPT_HISTORY */
 
 	kheap_nextgeneration();
 

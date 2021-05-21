@@ -7,16 +7,13 @@
  * Adds support for fixed sized circular buffers
  *
  * Functions:
- *      history_init      - allocate an empty circular buffer of given size
- *      history_write     - adds an element into the circular buffer. It
- *                          potentially overwrites an old element on full buffer
+ *      history_bootstrap - allocate an history element and read history from
+ *                          disk file
+ *      history_shutdown  - flush history to the disk file and frees the memory
  *      history_up        - get previous (older) element of history. Save the index
  *      history_down      - get next (newer) element of history. Save the index
- *      history_destroy   - release acquired resources
+ *      history_write     - put an element into the history
  */
-
-#define MAX_HIST    4
-#define MAX_CMD_LEN 64
 
 struct history;  /* Opaque. */
 
