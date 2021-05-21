@@ -30,21 +30,7 @@
 
 #include <types.h>
 #include <lib.h>
-#include <opt-history.h>
-
-#if OPT_HISTORY
-
 #include <history.h>
-
-static struct history *cmd_history = NULL;
-
-static void cmd_history_init(void)
-{
-  cmd_history = history_create(MAXHISTORY);
-  KASSERT(cmd_history != NULL);
-}
-
-#endif /* OPT_HISTORY */
 
 /*
  * Do a backspace in typed input.
@@ -70,9 +56,6 @@ void kgets(char *buf, size_t maxlen)
 #if OPT_HISTORY
   bool maybe_arrow = false, found;
   char ptr[64];
-
-  if (cmd_history == NULL)
-    cmd_history_init();
 #endif
 
   while (1) {
@@ -92,12 +75,12 @@ void kgets(char *buf, size_t maxlen)
             break;
           case 65:
             /* Arrow UP */
-            found = history_up(cmd_history, ptr);
+            found = history_up(ptr);
             maybe_arrow = false;
             break;
           case 66:
             /* Arrow DOWN */
-            found = history_down(cmd_history, ptr);
+            found = history_down(ptr);
             maybe_arrow = false;
             break;
           default:
@@ -176,6 +159,6 @@ void kgets(char *buf, size_t maxlen)
 
   buf[pos] = 0;
 #if OPT_HISTORY
-  history_write(cmd_history, buf);
+  history_write(buf);
 #endif
 }

@@ -53,6 +53,7 @@
 #include <opt-threads.h>
 #include <opt-data_struct.h>
 #include "autoconf.h"  // for pseudoconfig
+#include <history.h>
 
 
 /*
@@ -135,6 +136,11 @@ boot(void)
 	kprintf_bootstrap();
 	thread_start_cpus();
 
+#if OPT_HISTORY
+	history_bootstrap();
+#endif /* OPT_HISTORY */
+
+
 	/* Default bootfs - but ignore failure, in case emu0 doesn't exist */
 	vfs_setbootfs("emu0");
 
@@ -163,7 +169,11 @@ shutdown(void)
 
 	thread_shutdown();
 
-	splhigh();
+#if OPT_HISTORY
+  history_shutdown();
+#endif /* OPT_HISTORY */
+
+  splhigh();
 }
 
 /*****************************************/

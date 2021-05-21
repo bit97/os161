@@ -1,3 +1,8 @@
+#ifndef _HISTORY_H_
+#define _HISTORY_H_
+
+#include <opt-history.h>
+
 /*
  * Adds support for fixed sized circular buffers
  *
@@ -10,12 +15,16 @@
  *      history_destroy   - release acquired resources
  */
 
-#define MAXHISTORY    64
+#define MAX_HIST    4
+#define MAX_CMD_LEN 64
 
 struct history;  /* Opaque. */
 
-struct history *history_create(unsigned size);
-void            history_write(struct history *, char* data);
-bool            history_up(struct history*, char* data);
-bool            history_down(struct history*, char* data);
-void            history_destroy(struct history *);
+void            history_bootstrap(void);
+void            history_shutdown(void);
+
+void            history_write(char* data);
+bool            history_up(char* data);
+bool            history_down(char* data);
+
+#endif /* _HISTORY_H_ */
