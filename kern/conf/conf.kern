@@ -475,3 +475,5 @@ defoption wait
 optfile   wait  syscall/proc_syscalls.c
 
 defoption fork
+
+defoption file

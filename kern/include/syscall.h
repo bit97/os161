@@ -34,6 +34,7 @@
 #include <opt-sys_proc.h>
 #include <opt-wait.h>
 #include <opt-fork.h>
+#include <opt-file.h>
 #include <types.h>
 #include <cdefs.h> /* for __DEAD */
 struct trapframe; /* from <machine/trapframe.h> */
@@ -81,5 +82,12 @@ pid_t sys_getpid(void);
 #if OPT_FORK
 pid_t sys_fork(struct trapframe *tf);
 #endif /* OPT_FORK */
+
+#if OPT_FILE
+int sys_open(const char *path, int oflag);
+int sys_close(int fd);
+int sys_remove(const char *path);
+off_t sys_lseek(int fd, off_t offset, int whence);
+#endif /* OPT_FILE */
 
 #endif /* _SYSCALL_H_ */

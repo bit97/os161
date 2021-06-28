@@ -37,6 +37,8 @@
 #include <syscall.h>
 #include <opt-fork.h>
 #include <opt-wait.h>
+#include <opt-file.h>
+#include <opt-sys_io.h>
 
 
 /*
@@ -150,6 +152,27 @@ syscall(struct trapframe *tf)
     break;
 #endif /* OPT_FORK */
 
+#if OPT_FILE
+	    case SYS_open:
+    retval = sys_open((const char*)tf->tf_a0, (int)tf->tf_a1);
+    err = retval < 0 ? EACCES : 0;
+    break;
+
+    case SYS_close:
+      retval = sys_close((int)tf->tf_a0);
+      err = retval < 0 ? EBADF : 0;
+      break;
+
+    case SYS_remove:
+      retval = sys_remove((const char*)tf->tf_a0);
+      err = retval < 0 ? EBADF : 0;
+      break;
+
+    case SYS_lseek:
+      retval = (int)sys_lseek((int)tf->tf_a0, (off_t)tf->tf_a1, (int)tf->tf_a2);
+      err = retval < 0 ? EBADF : 0;
+      break;
+#endif /* OPT_FILE */
 
 	    /* Add stuff here */
 

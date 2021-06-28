@@ -108,6 +108,7 @@ struct proc *
 proc_create(const char *name)
 {
 	struct proc *proc;
+	int i;
 
 	proc = kmalloc(sizeof(*proc));
 	if (proc == NULL) {
@@ -135,6 +136,16 @@ proc_create(const char *name)
 
   proc->p_pid = pid_table_get(proc);
 #endif /* OPT_WAIT */
+
+#if OPT_FILE
+  for (i = STDERR_FILENO + 1; i < OPEN_MAX; i++) {
+    proc->openfiles[i].v = NULL;
+    proc->openfiles[i].offset = 0;
+    proc->openfiles[i].reference_count = 0;
+  }
+#else
+    (void)i;
+#endif /* OPT_FILE */
 
 	return proc;
 }

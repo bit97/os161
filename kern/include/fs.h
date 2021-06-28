@@ -30,6 +30,8 @@
 #ifndef _FS_H_
 #define _FS_H_
 
+#include <opt-file.h>
+
 struct vnode; /* in vnode.h */
 
 
@@ -87,5 +89,12 @@ struct fs_ops {
 /* Initialization functions for builtin fake file systems. */
 void semfs_bootstrap(void);
 
+#if OPT_FILE
+struct openfile {
+  struct vnode* v;
+  unsigned reference_count;
+  unsigned offset;
+};
+#endif /* OPT_FILE */
 
 #endif /* _FS_H_ */

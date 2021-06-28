@@ -38,11 +38,19 @@
 
 #include <opt-wait.h>
 #include <opt-fork.h>
+#include <opt-file.h>
 #include <spinlock.h>
+
 #if OPT_WAIT
 #include <synch.h>
-
 #endif /* OPT_WAIT */
+
+#if OPT_FILE
+#include <vnode.h>
+#include <fs.h>
+#include <limits.h>
+#include <kern/unistd.h>
+#endif /* OPT_FILE */
 
 struct addrspace;
 struct thread;
@@ -86,6 +94,10 @@ struct proc {
 
   pid_t p_pid;
 #endif /* OPT_WAIT */
+
+#if OPT_FILE
+  struct openfile openfiles[OPEN_MAX];
+#endif /* OPT_FILE */
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */

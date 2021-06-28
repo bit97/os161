@@ -1,4 +1,4 @@
-OS161_VERS=WAITPID
+OS161_VERS=FILE
 
 function err {
   notify-send --urgency=critical --expire-time=1000 $1
