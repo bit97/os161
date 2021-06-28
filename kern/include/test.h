@@ -106,7 +106,7 @@ int memstats(int nargs, char **args);
 #endif /* OPT_VM_ALLOC */
 
 /* Routine for running a user-level program. */
-int runprogram(char *progname);
+int runprogram(char *progname, char **kargv, int kargc);
 
 /* Kernel menu system. */
 void menu(char *argstr);

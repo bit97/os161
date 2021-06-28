@@ -49,3 +49,4 @@ options wait            # Adds support for waitpid syscall
 options fork            # Adds support for fork syscall
 
 options file            # Adds support for file related system calls
+options args            # Adds support for argument passing

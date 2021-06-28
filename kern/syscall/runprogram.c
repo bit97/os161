@@ -46,6 +46,12 @@
 #include <cpu.h>
 #include "../arch/mips/include/trapframe.h"
 
+#include <opt-args.h>
+
+#if OPT_ARGS
+#include <copyinout.h>
+#endif
+
 /*
  * Load program "progname" and start running it in usermode.
  * Does not return except on error.
@@ -53,12 +59,14 @@
  * Calls vfs_open on progname and thus may destroy it.
  */
 int
-runprogram(char *progname)
+runprogram(char *progname, char **kargv, int kargc)
 {
 	struct addrspace *as;
 	struct vnode *v;
-	vaddr_t entrypoint, stackptr;
-	int result;
+	vaddr_t entrypoint, stackptr, *argv;
+	userptr_t baseptr;
+	int result, i;
+	size_t arg_len, stack_len;
 
 	/* Open the file. */
 	result = vfs_open(progname, O_RDONLY, 0, &v);
@@ -98,10 +106,42 @@ runprogram(char *progname)
 		return result;
 	}
 
+#if OPT_ARGS
+  /* include the NULL pointer as the last element of argv */
+  argv = (vaddr_t*)kmalloc(sizeof (vaddr_t) * (kargc + 1));
+	baseptr = (userptr_t)stackptr;
+
+  /* Push the arguments themselves */
+  for (i = 0; i < kargc; i++) {
+    arg_len = strlen(kargv[i]) + 1;
+    stack_len = ROUNDUP(arg_len, 4);
+    baseptr -= stack_len;
+
+    copyoutstr(kargv[i], baseptr, arg_len, &arg_len);
+    argv[i] = (vaddr_t) baseptr;
+  }
+  /* NULL terminator */
+  argv[i] = (vaddr_t) NULL;
+
+  /* Push the pointer to the arguments */
+  for (i = kargc; i >= 0; i--) {
+    baseptr -= 4;
+    copyout(&argv[i], baseptr, 4);
+  }
+
+#else
+	(void)kargc;
+	(void)kargv;
+	(void)baseptr;
+	(void)argv;
+	(void)arg_len;
+	(void)stack_len;
+#endif
+
 	/* Warp to user mode. */
-	enter_new_process(0 /*argc*/, NULL /*userspace addr of argv*/,
+	enter_new_process(kargc /*argc*/, (userptr_t) baseptr /*userspace addr of argv*/,
 			  NULL /*userspace addr of environment*/,
-			  stackptr, entrypoint);
+            (vaddr_t) baseptr, entrypoint);
 
 	/* enter_new_process does not return. */
 	panic("enter_new_process returned\n");
